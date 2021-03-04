@@ -1,0 +1,301 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class NewPlayerMovement : MonoBehaviour
+{
+
+    // Assingables
+    public Transform playerCam;
+    public Transform orientation;
+
+    private Rigidbody rb;
+
+    // Keyboard or Controller
+    public bool keyboard = true;
+
+    // Rotation and look
+    private float xRotation;
+    private float sensitivity = 1f;
+    private float sensMultiplier = 1f;
+    private float desiredX;
+
+    // Movement
+    public float moveAccel = 4500;
+    public float maxSpeed = 20;
+
+    // Grounded
+    public bool grounded;
+    public LayerMask whatIsGround;
+    RaycastHit hitInfo;
+
+    // Slope
+    public float maxSlopeAngle = 35f;
+
+    // Jump
+    public float jumpForce = 250;
+    private bool readyToJump = true;
+    private float jumpCooldown = 0.25f;
+    private bool readyToDoubleJump = true;
+    public float horizontalDoubleJumpForce = 1f;
+
+    // Counter Movement
+    private float threshold = 0.01f;
+    public float counterMovement = 0.175f;
+    public float groundedCoefficent = 1f;
+
+    // Variables
+    float leftRightInput, forwardBackwardInput;
+    public bool jumpHeld, jumpDown;
+    private Vector3 tiltInput, projForward, rayDirection;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void FixedUpdate()
+    {
+        CheckGround();
+        Movement();
+    }
+
+    private void Update()
+    {
+        MyInput();
+        Look();
+    }
+
+    /// <summary>
+    /// Collects user inputs
+    /// </summary>
+    private void MyInput()
+    {
+        leftRightInput = Input.GetAxisRaw("Horizontal");
+        forwardBackwardInput = Input.GetAxisRaw("Vertical");
+
+        // jumpHeld is true while the button is pressed
+        jumpHeld = Input.GetButton("Jump");
+
+        // jumpDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
+        if (!jumpDown)
+        {
+            jumpDown = Input.GetButtonDown("Jump");
+        }
+    }
+
+    /// <summary>
+    /// Handles all player movement
+    /// </summary>
+    private void Movement()
+    {
+        // Adds aditional gravity (makes physics work better idk)
+        float gravityMultiplier = 10f;
+        rb.AddForce(Vector3.down * Time.fixedDeltaTime * gravityMultiplier);
+
+        // Creates a directional player input Vector3 that is normalized if they are using a keyboard
+        if (keyboard)
+        {
+            tiltInput = new Vector3(leftRightInput, 0, forwardBackwardInput).normalized;
+        } else
+        {
+            tiltInput = new Vector3(leftRightInput, 0, forwardBackwardInput);
+        }
+
+        // Player jumps or double jumps if conditions are met
+        if (grounded && jumpHeld && readyToJump)
+        {
+            Jump();
+        } else if (!grounded && jumpDown && readyToDoubleJump)
+        {
+            DoubleJump();
+        }
+
+        // Resets jumpDown variable to false
+        jumpDown = false;
+
+        // Limits player influence on movement while not grounded
+        float airborneMultiplier = 1f;
+        if (!grounded)
+        {
+            airborneMultiplier = .1f;
+        }
+        
+        // Don't understand projForward tbh
+        projForward = orientation.transform.forward - (Vector3.Dot(orientation.transform.forward, hitInfo.normal) * hitInfo.normal);
+        
+        // The direction that the player is attempting to move, adjusted for slopes
+        rayDirection = Quaternion.LookRotation(projForward, hitInfo.normal) * tiltInput;
+        rayDirection.Normalize();
+
+        // Negates vertical component when positive so that additional force is not applied upwards
+        if (rayDirection.y > 0)
+        {
+            rayDirection = new Vector3(rayDirection.x, 0, rayDirection.z);
+        }
+
+        // Applies force in direction player is trying to move multiplies by moveAccel, fixedDeltaTime, and the airborneMultiplier
+        rb.AddForce(rayDirection * moveAccel * Time.fixedDeltaTime * airborneMultiplier);
+
+        // Lowers horizontal speed to maxSpeed if horizontal velocity magnitude is greater than maxSpeed
+        Vector2 horizontal = new Vector2(rb.velocity.x, rb.velocity.z);
+        if (horizontal.magnitude > maxSpeed)
+        {
+            horizontal = horizontal.normalized * maxSpeed;
+            rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.y);
+        }
+
+        // Handles player slowdown when there is little or no player directional input
+        Vector2 horizontalMagRelative = FindVelRelativeToLook();
+        CounterMovement(horizontalMagRelative);
+    }
+
+    /// <summary>
+    /// Handles player grounded jumps
+    /// </summary>
+    private void Jump()
+    {
+        // Resets vertical velocity to 0 (useful for jumping while moving on slopes)
+        rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+
+        // Adds jumpForce amount of force in upward direction
+        rb.AddForce(Vector2.up * jumpForce);
+
+        // Player is unable to jump again for jumpCooldown length 
+        // (useful so that player does not jump multiple times before exiting ground collision)
+        readyToJump = false;
+        Invoke(nameof(ResetJump), jumpCooldown);
+    }
+
+    /// <summary>
+    /// Sets readyToJump to true
+    /// </summary>
+    private void ResetJump()
+    {
+        readyToJump = true;
+    }
+
+    /// <summary>
+    /// Handles player mid air jumps
+    /// </summary>
+    private void DoubleJump()
+    {
+        // Resets vertical velocity to 0 if descending
+        if (rb.velocity.y < 0)
+        {
+            rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+        }
+
+        // Adds force in direction of player movement and upwards
+        // (serves to allow player to use double jump to significantly alter horizontal direction midair)
+        Vector3 jumpDirection = new Vector3(rayDirection.x * horizontalDoubleJumpForce, 1, rayDirection.z * horizontalDoubleJumpForce);
+        rb.AddForce(jumpDirection * jumpForce);
+
+        // Player is unable to double jump again until they touch the ground or a wallrunnable wall
+        readyToDoubleJump = false;
+    }
+
+    /// <summary>
+    /// Checks whether the slope of the param is less than maxSlopeAngle
+    /// </summary>
+    /// <param name="v">Slope to be checked</param>
+    /// <returns>Returns true if slope of the param is less than maxSlopeAngle</returns>
+    private bool IsFloor(Vector3 v)
+    {
+        float angle = Vector3.Angle(Vector3.up, v);
+        return angle < maxSlopeAngle;
+    }
+
+    /// <summary>
+    /// Sets grounded to true if there is a ground layer object within a certain distance below player RigidBody, false otherwise.
+    /// Also resets readyToDoubleJump to true if grounded is set to true
+    /// </summary>
+    private void CheckGround()
+    {
+        // Checks for ground layer object 
+        if (Physics.Raycast(rb.transform.position, -Vector3.up, out hitInfo, 1.15f, whatIsGround))
+        {
+            grounded = true;
+            readyToDoubleJump = true;
+        } else
+        {
+            grounded = false;
+        }
+    }
+
+    /// <summary>
+    /// Handles player camera rotation
+    /// </summary>
+    private void Look()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * sensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * sensitivity;
+
+        //Find current look rotation
+        Vector3 rot = playerCam.transform.localRotation.eulerAngles;
+        desiredX = rot.y + mouseX;
+
+        //Rotate, and also make sure we dont over- or under-rotate.
+        xRotation -= mouseY;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+
+        //Perform the rotations
+        playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
+        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+    }
+
+    /// <summary>
+    /// Handles player slowdown when there is little or no player directional input
+    /// </summary>
+    /// <param name="mag">Vector2 containing directional movement relative to player look direction</param>
+    private void CounterMovement(Vector2 mag)
+    {
+        // Used to slow the player much less if they are not grounded
+        if (grounded) 
+        {
+            groundedCoefficent = 1f;
+        } else
+        {
+            groundedCoefficent = .025f;
+        }
+
+        if (Math.Abs(mag.x) > threshold && Math.Abs(leftRightInput) < 0.05f || (mag.x < -threshold && leftRightInput > 0) || (mag.x > threshold && leftRightInput < 0))
+        {
+            rb.AddForce(moveAccel * orientation.transform.right * Time.fixedDeltaTime * -mag.x * counterMovement * groundedCoefficent);
+        }
+        if (Math.Abs(mag.y) > threshold && Math.Abs(forwardBackwardInput) < 0.05f || (mag.y < -threshold && forwardBackwardInput > 0) || (mag.y > threshold && forwardBackwardInput < 0))
+        {
+            rb.AddForce(moveAccel * orientation.transform.forward * Time.fixedDeltaTime * -mag.y * counterMovement * groundedCoefficent);
+        }
+    }
+
+    // Find the velocity relative to where the player is looking
+    // Useful for vectors calculations regarding movement and limiting movement
+    public Vector2 FindVelRelativeToLook()
+    {
+        float lookAngle = orientation.transform.eulerAngles.y;
+        float moveAngle = Mathf.Atan2(rb.velocity.x, rb.velocity.z) * Mathf.Rad2Deg;
+
+        float u = Mathf.DeltaAngle(lookAngle, moveAngle);
+        float v = 90 - u;
+
+        float magnitue = (float)Math.Sqrt(Math.Pow(rb.velocity.x, 2) + Math.Pow(rb.velocity.z, 2));
+
+        float yMag = magnitue * Mathf.Cos(u * Mathf.Deg2Rad);
+        float xMag = magnitue * Mathf.Cos(v * Mathf.Deg2Rad);
+
+        return new Vector2(xMag, yMag);
+    }
+
+    private void StartWallRun()
+    {
+
+    } 
+}
