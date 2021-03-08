@@ -34,11 +34,11 @@ RenderSettings:
   m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
   m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 256
-  m_ReflectionBounces: 5
-  m_ReflectionIntensity: 1
+  m_ReflectionBounces: 1
+  m_ReflectionIntensity: 0
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.4465829, g: 0.49641728, b: 0.57482105, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 0}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -486,7 +486,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.7
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -1104,20 +1104,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCam: {fileID: 1648570041}
   orientation: {fileID: 1005016038}
+  keyboard: 1
   moveAccel: 4500
   maxSpeed: 20
   grounded: 0
   whatIsGround:
     serializedVersion: 2
     m_Bits: 256
+  isWallLeft: 0
+  isWallRight: 0
+  isWallRunning: 0
+  whatIsWall:
+    serializedVersion: 2
+    m_Bits: 512
+  wallrunForce: 1
+  maxWallSpeed: 25
   maxSlopeAngle: 35
-  jumpForce: 250
+  jumpForce: 750
+  horizontalDoubleJumpForce: 1
   counterMovement: 0.175
   groundedCoefficent: 1
   jumpHeld: 0
   jumpDown: 0
-  sprinting: 0
-  crouching: 0
 --- !u!114 &1061320304
 MonoBehaviour:
   m_ObjectHideFlags: 0

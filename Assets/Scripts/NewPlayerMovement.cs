@@ -18,17 +18,29 @@ public class NewPlayerMovement : MonoBehaviour
     // Rotation and look
     private float xRotation;
     private float sensitivity = 1f;
-    private float sensMultiplier = 1f;
     private float desiredX;
 
     // Movement
     public float moveAccel = 4500;
     public float maxSpeed = 20;
+    public float airborneMovementCoefficent = .25f;
 
     // Grounded
     public bool grounded;
     public LayerMask whatIsGround;
-    RaycastHit hitInfo;
+    RaycastHit groundHitInfo;
+
+    // Wall
+    public bool isWallLeft;
+    public bool isWallRight;
+    public bool isWallRunning;
+    public LayerMask whatIsWall;
+    public float wallrunForce = 1f;
+    public float maxWallSpeed = 25f;
+    RaycastHit wallHitInfo;
+    GameObject hitWallObject;
+    GameObject cannotRunOnWallObject;
+    public float sameWallCooldown = 1f;
 
     // Slope
     public float maxSlopeAngle = 35f;
@@ -37,17 +49,19 @@ public class NewPlayerMovement : MonoBehaviour
     public float jumpForce = 250;
     private bool readyToJump = true;
     private float jumpCooldown = 0.25f;
-    private bool readyToDoubleJump = true;
+    public bool readyToDoubleJump = true;
     public float horizontalDoubleJumpForce = 1f;
 
     // Counter Movement
     private float threshold = 0.01f;
     public float counterMovement = 0.175f;
-    public float groundedCoefficent = 1f;
+    private float counterCoefficent = 1f;
+    public float airborneCounterCoefficent = .1f;
 
     // Variables
     float leftRightInput, forwardBackwardInput;
     public bool jumpHeld, jumpDown;
+    private Vector2 horizontal;
     private Vector3 tiltInput, projForward, rayDirection;
 
     private void Awake()
@@ -97,7 +111,7 @@ public class NewPlayerMovement : MonoBehaviour
     private void Movement()
     {
         // Adds aditional gravity (makes physics work better idk)
-        float gravityMultiplier = 10f;
+        float gravityMultiplier = 50f;
         rb.AddForce(Vector3.down * Time.fixedDeltaTime * gravityMultiplier);
 
         // Creates a directional player input Vector3 that is normalized if they are using a keyboard
@@ -110,29 +124,33 @@ public class NewPlayerMovement : MonoBehaviour
         }
 
         // Player jumps or double jumps if conditions are met
-        if (grounded && jumpHeld && readyToJump)
+        if (grounded && !isWallRunning && jumpHeld && readyToJump)
         {
             Jump();
-        } else if (!grounded && jumpDown && readyToDoubleJump)
+        } else if (!grounded && !isWallRunning && jumpDown && readyToDoubleJump)
         {
             DoubleJump();
+        } else if (!grounded && isWallRunning && jumpDown)
+        {
+            WallJump();
         }
 
         // Resets jumpDown variable to false
         jumpDown = false;
 
         // Limits player influence on movement while not grounded
-        float airborneMultiplier = 1f;
+        float movementCoefficent = 1f;
         if (!grounded)
         {
-            airborneMultiplier = .1f;
+            movementCoefficent = airborneMovementCoefficent;
         }
         
-        // Don't understand projForward tbh
-        projForward = orientation.transform.forward - (Vector3.Dot(orientation.transform.forward, hitInfo.normal) * hitInfo.normal);
+        // The direction the player is facing adjusted for slopes
+        projForward = orientation.forward - (Vector3.Dot(orientation.forward, groundHitInfo.normal) * groundHitInfo.normal);
         
+
         // The direction that the player is attempting to move, adjusted for slopes
-        rayDirection = Quaternion.LookRotation(projForward, hitInfo.normal) * tiltInput;
+        rayDirection = Quaternion.LookRotation(projForward, groundHitInfo.normal) * tiltInput;
         rayDirection.Normalize();
 
         // Negates vertical component when positive so that additional force is not applied upwards
@@ -141,20 +159,48 @@ public class NewPlayerMovement : MonoBehaviour
             rayDirection = new Vector3(rayDirection.x, 0, rayDirection.z);
         }
 
-        // Applies force in direction player is trying to move multiplies by moveAccel, fixedDeltaTime, and the airborneMultiplier
-        rb.AddForce(rayDirection * moveAccel * Time.fixedDeltaTime * airborneMultiplier);
-
-        // Lowers horizontal speed to maxSpeed if horizontal velocity magnitude is greater than maxSpeed
-        Vector2 horizontal = new Vector2(rb.velocity.x, rb.velocity.z);
-        if (horizontal.magnitude > maxSpeed)
+        horizontal = new Vector2(rb.velocity.x, rb.velocity.z); // Should be able to set this even earlier if needed
+        CheckForWall();
+        if (isWallRunning)
         {
-            horizontal = horizontal.normalized * maxSpeed;
+            Wallrun();
+        } else
+        {
+            // Applies force in direction player is trying to move multiplies by moveAccel, fixedDeltaTime, and the airborneMultiplier
+            rb.AddForce(rayDirection * moveAccel * Time.fixedDeltaTime * movementCoefficent);
+        }
+
+        //horizontal = new Vector2(rb.velocity.x, rb.velocity.z); //This should not be necessary as forces should not have any immediate effect on velocity
+
+        // Lowers horizontal speed to maxSpeed if horizontal velocity magnitude is greater than maxSpeed (make this its own function later)
+        if (isWallRunning)
+        {
+            if (horizontal.magnitude > maxWallSpeed)
+            {
+                horizontal = horizontal.normalized * maxWallSpeed;
+                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.y);
+            }
+        } else if (grounded)
+        {
+            if (horizontal.magnitude > maxSpeed)
+            {
+                horizontal = horizontal.normalized * maxSpeed;
+                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.y);
+            }
+        } else if (horizontal.magnitude > 30)
+        {
+            horizontal = horizontal.normalized * 30;
             rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.y);
         }
+
+        Debug.DrawLine(new Vector3(0, 1, 0), new Vector3(0, 2, 0), Color.blue);
+        Debug.DrawLine(new Vector3(0, 1, 0), (Quaternion.Euler(Vector3.right * 90f) * new Vector3(0, 1, 0)) + new Vector3(0,1,0), Color.red);
 
         // Handles player slowdown when there is little or no player directional input
         Vector2 horizontalMagRelative = FindVelRelativeToLook();
         CounterMovement(horizontalMagRelative);
+
+        //Debug.Log(horizontal.magnitude);
     }
 
     /// <summary>
@@ -220,7 +266,7 @@ public class NewPlayerMovement : MonoBehaviour
     private void CheckGround()
     {
         // Checks for ground layer object 
-        if (Physics.Raycast(rb.transform.position, -Vector3.up, out hitInfo, 1.15f, whatIsGround))
+        if (Physics.Raycast(rb.position, -Vector3.up, out groundHitInfo, 1.15f, whatIsGround))
         {
             grounded = true;
             readyToDoubleJump = true;
@@ -239,7 +285,7 @@ public class NewPlayerMovement : MonoBehaviour
         float mouseY = Input.GetAxis("Mouse Y") * sensitivity;
 
         //Find current look rotation
-        Vector3 rot = playerCam.transform.localRotation.eulerAngles;
+        Vector3 rot = playerCam.localRotation.eulerAngles;
         desiredX = rot.y + mouseX;
 
         //Rotate, and also make sure we dont over- or under-rotate.
@@ -247,8 +293,8 @@ public class NewPlayerMovement : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
         //Perform the rotations
-        playerCam.transform.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
-        orientation.transform.localRotation = Quaternion.Euler(0, desiredX, 0);
+        playerCam.localRotation = Quaternion.Euler(xRotation, desiredX, 0);
+        orientation.localRotation = Quaternion.Euler(0, desiredX, 0);
     }
 
     /// <summary>
@@ -260,27 +306,30 @@ public class NewPlayerMovement : MonoBehaviour
         // Used to slow the player much less if they are not grounded
         if (grounded) 
         {
-            groundedCoefficent = 1f;
+            counterCoefficent = 1f;
         } else
         {
-            groundedCoefficent = .025f;
+            counterCoefficent = airborneCounterCoefficent;
         }
 
         if (Math.Abs(mag.x) > threshold && Math.Abs(leftRightInput) < 0.05f || (mag.x < -threshold && leftRightInput > 0) || (mag.x > threshold && leftRightInput < 0))
         {
-            rb.AddForce(moveAccel * orientation.transform.right * Time.fixedDeltaTime * -mag.x * counterMovement * groundedCoefficent);
+            rb.AddForce(moveAccel * orientation.right * Time.fixedDeltaTime * -mag.x * counterMovement * counterCoefficent);
         }
         if (Math.Abs(mag.y) > threshold && Math.Abs(forwardBackwardInput) < 0.05f || (mag.y < -threshold && forwardBackwardInput > 0) || (mag.y > threshold && forwardBackwardInput < 0))
         {
-            rb.AddForce(moveAccel * orientation.transform.forward * Time.fixedDeltaTime * -mag.y * counterMovement * groundedCoefficent);
+            rb.AddForce(moveAccel * orientation.forward * Time.fixedDeltaTime * -mag.y * counterMovement * counterCoefficent);
         }
     }
 
-    // Find the velocity relative to where the player is looking
-    // Useful for vectors calculations regarding movement and limiting movement
+    /// <summary>
+    /// Find the velocity relative to where the player is looking
+    /// Useful for vectors calculations regarding movement and limiting movement
+    /// </summary>
+    /// <returns></returns>
     public Vector2 FindVelRelativeToLook()
     {
-        float lookAngle = orientation.transform.eulerAngles.y;
+        float lookAngle = orientation.eulerAngles.y;
         float moveAngle = Mathf.Atan2(rb.velocity.x, rb.velocity.z) * Mathf.Rad2Deg;
 
         float u = Mathf.DeltaAngle(lookAngle, moveAngle);
@@ -294,8 +343,95 @@ public class NewPlayerMovement : MonoBehaviour
         return new Vector2(xMag, yMag);
     }
 
-    private void StartWallRun()
+    public float wallRunStickForce = 100;
+    private void Wallrun()
     {
+        if (rb.velocity.y > 0.5f)
+        {
+            rb.useGravity = true;
+        } else
+        {
+            rb.useGravity = false;
+        }
+        
+        rb.AddForce(rayDirection * wallrunForce * Time.fixedDeltaTime);
+        rb.AddForce(-wallHitInfo.normal * wallRunStickForce); //This will not work for walls that are angled (probably just needs y component = 0)
 
-    } 
+    }
+    
+    private void CheckForWall()
+    {
+        // This is useful for determing the direction the player is trying to move along the wall (not used for anything atm)
+        //dot = Vector3.Dot(Vector3.Cross(rayDirection, wallHitInfo.normal), new Vector3(1, 1, 1));
+
+        if (!isWallRunning && !grounded && horizontal.magnitude > .5f)
+        {
+            if (Physics.Raycast(rb.position, rayDirection, out wallHitInfo, 1f, whatIsWall) || Physics.Raycast(orientation.right, rayDirection, out wallHitInfo, 1f, whatIsWall))
+            {
+                if (cannotRunOnWallObject == null || cannotRunOnWallObject.GetInstanceID() != wallHitInfo.collider.gameObject.GetInstanceID())
+                {
+                    hitWallObject = wallHitInfo.collider.gameObject;
+
+                    // Resets vertical velocity to 0 if descending when first colliding with wall
+                    if (rb.velocity.y < 0)
+                    {
+                        rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+                    }
+
+                    isWallRunning = true;
+                    readyToDoubleJump = true;
+                }
+                Debug.Log(isWallRunning);
+                if (cannotRunOnWallObject != null) Debug.Log("cannot " + cannotRunOnWallObject.GetInstanceID());
+                if (hitWallObject != null) Debug.Log("hit " + hitWallObject.GetInstanceID());
+            }
+            
+        } else // This could be one big else if A || B || C || D
+        {
+            if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
+            {
+                Invoke(nameof(StopWallRun), .1f);
+            } else if (Vector3.Angle(rayDirection, -wallHitInfo.normal) > 120f) 
+            {
+                Invoke(nameof(StopWallRun), .1f);
+            } else if (horizontal.magnitude < .5f)
+            {
+                StopWallRun();
+            } else if (grounded)
+            {
+                StopWallRun();
+            }
+        }
+    }
+
+    private void StopWallRun()
+    {
+        isWallRunning = false;
+        rb.useGravity = true;
+
+        // Stores the wall that was just wallrun on so that it cannot be run on again
+        cannotRunOnWallObject = hitWallObject;
+
+        // Resets the wall to be wallrunnable again after sameWallCooldown
+        Invoke(nameof(resetCannotRunOnWallObject), sameWallCooldown);
+    }
+
+    /// <summary>
+    /// Handles jumping off walls
+    /// </summary>
+    private void WallJump()
+    {
+        Vector3 jumpDirection = new Vector3((rayDirection.x/2 + wallHitInfo.normal.x) * horizontalDoubleJumpForce, 1, (rayDirection.z/2 + wallHitInfo.normal.z) * horizontalDoubleJumpForce);
+        rb.AddForce(jumpDirection * jumpForce);
+        StopWallRun();
+    }
+
+    /// <summary>
+    /// Sets cannotRunWallObject to null
+    /// </summary>
+    private void resetCannotRunOnWallObject()
+    {
+        cannotRunOnWallObject = null;
+    }
+
 }
