@@ -66,6 +66,7 @@ public class NewPlayerMovement : MonoBehaviour
     public bool jumpHeld, jumpDown;
     private Vector3 tiltInput, projForward, rayDirection, horizontal;
     public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run, 5 = air after boost
+    private int consecutiveIdleFixedUpdates = 0;
 
     private void Awake()
     {
@@ -120,8 +121,21 @@ public class NewPlayerMovement : MonoBehaviour
     /// </summary>
     private void Movement()
     {
+        // Sets velocity to 0 if player velocity is near 0 for 5 fixedUpdates (0.1 sec)
+        if (rb.velocity.magnitude != 0 && rb.velocity.magnitude < 0.001)
+        {
+            consecutiveIdleFixedUpdates++;
+            if (consecutiveIdleFixedUpdates > 4)
+            {
+                rb.velocity = Vector3.zero;
+            }
+        } else
+        {
+            consecutiveIdleFixedUpdates = 0;
+        }
+
         // Adds aditional gravity (makes physics work better idk)
-        float gravityMultiplier = 50f;
+        float gravityMultiplier = 10f;
         rb.AddForce(Vector3.down * Time.fixedDeltaTime * gravityMultiplier);
 
         // Creates a directional player input Vector3 that is normalized if using a keyboard
@@ -258,7 +272,20 @@ public class NewPlayerMovement : MonoBehaviour
         // Adds force in direction of player movement and upwards
         // (serves to allow player to use double jump to significantly alter horizontal direction midair)
         Vector3 jumpDirection = new Vector3(rayDirection.x, 0, rayDirection.z);
-        AccelerateTo(jumpDirection * maxSpeed, horizontalDoubleJumpForce, new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+
+        // Probably a better way to do this
+        if (speedState == 3)
+        {
+            AccelerateTo(jumpDirection * maxSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+        }
+        else if (speedState == 4)
+        {
+            AccelerateTo(jumpDirection * maxWallSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+        } else // Should not be here
+        {
+            Debug.Log("SHOULD NOT BE HERE");
+            AccelerateTo(jumpDirection * maxSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+        }
         rb.AddForce(Vector2.up * jumpForce);
 
         // Player is unable to double jump again until they touch the ground or a wallrunnable wall
@@ -375,6 +402,8 @@ public class NewPlayerMovement : MonoBehaviour
     /// </summary>
     private void Wallrun()
     {
+        // wallrunForce = 500, wallRunStickForce = 100, moveAccel = 50, maxWallSpeed = 30
+
         // Turns gravity off if the player is not ascending
         if (rb.velocity.y > 0.5f)
         {
@@ -382,10 +411,12 @@ public class NewPlayerMovement : MonoBehaviour
         } else
         {
             rb.useGravity = false;
+            rb.AddForce(-Vector3.up * 10);
+            Debug.Log(rb.velocity.y);
         }
 
-        // Large force in player movement direction, usually directed into the wall at an angle
-        rb.AddForce(rayDirection * wallrunForce * Time.fixedDeltaTime);
+        Vector3 maxDirectionalSpeed = new Vector3(Math.Min(Math.Max(rayDirection.x * 2, -1), 1), 0, Math.Min(Math.Max(rayDirection.z * 2, -1), 1));
+        AccelerateTo(maxDirectionalSpeed * maxWallSpeed, wallrunForce, moveAccel);
 
         // Force to help player stick to wall
         rb.AddForce(-wallHitInfo.normal * wallRunStickForce); //This will not work for walls that are angled (probably just needs y component = 0)
@@ -397,11 +428,11 @@ public class NewPlayerMovement : MonoBehaviour
     private void CheckForWall()
     {
         // This is useful for determing the direction the player is trying to move along the wall (not used for anything atm)
-        //dot = Vector3.Dot(Vector3.Cross(rayDirection, wallHitInfo.normal), new Vector3(1, 1, 1));
+        // dot = Vector3.Dot(Vector3.Cross(rayDirection, wallHitInfo.normal), new Vector3(1, 1, 1));
 
         if (!isWallRunning && !grounded)
         {
-            if (Physics.Raycast(rb.position, rayDirection, out wallHitInfo, 1f, whatIsWall) || Physics.Raycast(orientation.right, rayDirection, out wallHitInfo, 1f, whatIsWall))
+            if (Physics.Raycast(rb.position, rayDirection, out wallHitInfo, 1f, whatIsWall))
             {
                 if (cannotRunOnWallObject == null || cannotRunOnWallObject.GetInstanceID() != wallHitInfo.collider.gameObject.GetInstanceID())
                 {
@@ -421,14 +452,14 @@ public class NewPlayerMovement : MonoBehaviour
                 }
             }
             
-        } else if (isWallRunning) // This could be one big else if A || B || C || D
+        } else if (isWallRunning)
         {
             if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
             {
-                Invoke(nameof(StopWallRun), .1f);
+                Invoke(nameof(StopWallRun), .2f);
             } else if (Vector3.Angle(rayDirection, -wallHitInfo.normal) > 120f) 
             {
-                Invoke(nameof(StopWallRun), .1f);
+                Invoke(nameof(StopWallRun), .2f);
             } else if (grounded)
             {
                 StopWallRun();
@@ -459,7 +490,13 @@ public class NewPlayerMovement : MonoBehaviour
     /// </summary>
     private void WallJump()
     {
-        Vector3 jumpDirection = new Vector3((rayDirection.x/2 + wallHitInfo.normal.x), 1, (rayDirection.z/2 + wallHitInfo.normal.z));
+        // Resets vertical velocity to 0 if descending
+        if (rb.velocity.y < 0)
+        {
+            rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+        }
+
+        Vector3 jumpDirection = new Vector3((rayDirection.x/2 + wallHitInfo.normal.x), 1, (rayDirection.z/2 + wallHitInfo.normal.z)); // Can be seperated from vertical component to better control horizontal push off wall
         rb.AddForce(jumpDirection * jumpForce);
         StopWallRun();
     }
