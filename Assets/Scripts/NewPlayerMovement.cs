@@ -42,6 +42,8 @@ public class NewPlayerMovement : MonoBehaviour
     GameObject hitWallObject;
     GameObject cannotRunOnWallObject;
     public float sameWallCooldown = 1f;
+    public float wallRunStickForce = 100;
+    public float wallJumpForce = 1000;
 
     // Slope
     public float maxSlopeAngle = 35f;
@@ -81,7 +83,7 @@ public class NewPlayerMovement : MonoBehaviour
         CheckGround();
         CheckForWall();
 
-        if (grounded)
+        if (grounded) // May be unnecessary
         {
             speedState = 0;
         }
@@ -163,24 +165,12 @@ public class NewPlayerMovement : MonoBehaviour
 
         horizontal = new Vector3(rb.velocity.x, 0, rb.velocity.z); // Should be able to set this even earlier if needed
 
-        //if (isWallRunning)
-        //{
-        //    Wallrun();
-        //} else
-        //{
-        //    AccelerateTo(rayDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-        //    // Applies force in direction player is trying to move multiplies by moveAccel, fixedDeltaTime, and the airborneMultiplier
-        //    //rb.AddForce(rayDirection * moveAccel * Time.fixedDeltaTime * movementCoefficent);
-        //}
-
-        //horizontal = new Vector2(rb.velocity.x, rb.velocity.z); //This should not be necessary as forces should not have any immediate effect on velocity
-
-        // Lowers horizontal speed to maxSpeed if horizontal velocity magnitude is greater than maxSpeed (make this its own function later)
-        if (speedState == 0)
+        // Movement force is handled depending on which state the player is currently in (switch to case later)
+        if (speedState == 0) // Running on ground
         {
             AccelerateTo(rayDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
         }
-        else if (speedState == 1)
+        else if (speedState == 1) // Wallrunning
         {
             Wallrun();
             if (horizontal.magnitude > maxWallSpeed)
@@ -189,11 +179,11 @@ public class NewPlayerMovement : MonoBehaviour
                 rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
             }
         }
-        else if (speedState == 3)
+        else if (speedState == 3) // Air after ground run
         {
             AccelerateTo(rayDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
         }
-        else if (speedState == 4)
+        else if (speedState == 4) // Air after wallrun
         {
             AccelerateTo(rayDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
             if (horizontal.magnitude > maxWallSpeed)
@@ -202,18 +192,15 @@ public class NewPlayerMovement : MonoBehaviour
                 rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
             }
         }
-        else if (horizontal.magnitude > 40)
+        else if (horizontal.magnitude > 40) //Unnecessary
         {
             horizontal = horizontal.normalized * 40;
             rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
         }
         //Debug.Log(speedState);
 
-        Debug.DrawLine(new Vector3(0, 1, 0), new Vector3(0, 2, 0), Color.blue);
-        Debug.DrawLine(new Vector3(0, 1, 0), (Quaternion.Euler(Vector3.right * 90f) * new Vector3(0, 1, 0)) + new Vector3(0,1,0), Color.red);
-
-        // Handles player slowdown when there is little or no player directional input
-        Vector2 horizontalMagRelative = FindVelRelativeToLook();
+        // Handles player slowdown when there is little or no player directional input (no longer necessary)
+        //Vector2 horizontalMagRelative = FindVelRelativeToLook();
         //CounterMovement(horizontalMagRelative);
 
         Debug.Log(horizontal.magnitude);
@@ -229,7 +216,6 @@ public class NewPlayerMovement : MonoBehaviour
             limit = decelerationLimit;
         acceleration = Vector3.ClampMagnitude(acceleration, limit);
 
-        Debug.Log(acceleration);
         rb.AddForce(acceleration);
     }
 
@@ -274,8 +260,7 @@ public class NewPlayerMovement : MonoBehaviour
         Vector3 jumpDirection = new Vector3(rayDirection.x, 0, rayDirection.z);
         AccelerateTo(jumpDirection * maxSpeed, horizontalDoubleJumpForce, new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
         rb.AddForce(Vector2.up * jumpForce);
-        //rb.AddForce(jumpDirection * jumpForce);
-        //Debug.Log(jumpDirection * jumpForce);
+
         // Player is unable to double jump again until they touch the ground or a wallrunnable wall
         readyToDoubleJump = false;
     }
@@ -385,9 +370,12 @@ public class NewPlayerMovement : MonoBehaviour
         return new Vector2(xMag, yMag);
     }
 
-    public float wallRunStickForce = 100;
+    /// <summary>
+    /// Handles movement force if player is wallrunning
+    /// </summary>
     private void Wallrun()
     {
+        // Turns gravity off if the player is not ascending
         if (rb.velocity.y > 0.5f)
         {
             rb.useGravity = true;
@@ -396,11 +384,16 @@ public class NewPlayerMovement : MonoBehaviour
             rb.useGravity = false;
         }
 
+        // Large force in player movement direction, usually directed into the wall at an angle
         rb.AddForce(rayDirection * wallrunForce * Time.fixedDeltaTime);
-        rb.AddForce(-wallHitInfo.normal * wallRunStickForce); //This will not work for walls that are angled (probably just needs y component = 0)
 
+        // Force to help player stick to wall
+        rb.AddForce(-wallHitInfo.normal * wallRunStickForce); //This will not work for walls that are angled (probably just needs y component = 0)
     }
     
+    /// <summary>
+    /// Checks whether the player is moving into or perpendicular to a wall and sets isWallRunning accordingly
+    /// </summary>
     private void CheckForWall()
     {
         // This is useful for determing the direction the player is trying to move along the wall (not used for anything atm)
@@ -426,9 +419,6 @@ public class NewPlayerMovement : MonoBehaviour
                     // state management
                     speedState = 1;
                 }
-                Debug.Log(isWallRunning);
-                if (cannotRunOnWallObject != null) Debug.Log("cannot " + cannotRunOnWallObject.GetInstanceID());
-                if (hitWallObject != null) Debug.Log("hit " + hitWallObject.GetInstanceID());
             }
             
         } else if (isWallRunning) // This could be one big else if A || B || C || D
@@ -436,23 +426,19 @@ public class NewPlayerMovement : MonoBehaviour
             if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
             {
                 Invoke(nameof(StopWallRun), .1f);
-                Debug.Log("bitch1");
             } else if (Vector3.Angle(rayDirection, -wallHitInfo.normal) > 120f) 
             {
                 Invoke(nameof(StopWallRun), .1f);
-                Debug.Log("bitch2");
-            //} else if (horizontal.magnitude < .5f)
-            //{
-            //    StopWallRun();
-            //    Debug.Log("bitch3");
             } else if (grounded)
             {
                 StopWallRun();
-                Debug.Log("bitch4");
             }
         }
     }
 
+    /// <summary>
+    /// Sets isWallRunning to false, turns gravity back on, and does not allow for the same wall to be wallrun again for sameWallCooldown
+    /// </summary>
     private void StopWallRun()
     {
         isWallRunning = false;
@@ -467,8 +453,6 @@ public class NewPlayerMovement : MonoBehaviour
         // state management
         speedState = 4;
     }
-
-    public float wallJumpForce = 1000;
 
     /// <summary>
     /// Handles jumping off walls

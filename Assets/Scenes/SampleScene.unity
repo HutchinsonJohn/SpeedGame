@@ -1211,7 +1211,7 @@ MonoBehaviour:
   whatIsWall:
     serializedVersion: 2
     m_Bits: 512
-  wallrunForce: 4000
+  wallrunForce: 2000
   maxWallSpeed: 30
   sameWallCooldown: 3
   maxSlopeAngle: 35
@@ -1224,6 +1224,7 @@ MonoBehaviour:
   jumpDown: 0
   speedState: 0
   wallRunStickForce: 100
+  wallJumpForce: 1000
 --- !u!114 &1061320304
 MonoBehaviour:
   m_ObjectHideFlags: 0
