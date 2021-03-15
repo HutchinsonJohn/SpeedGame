@@ -46,6 +46,12 @@ public class PlayerMovement : MonoBehaviour
     public float wallRunStickForce = 100;
     public float wallJumpForce = 1000;
 
+    // Boost
+    public float maxBoostSpeed = 30;
+    public bool isBoosting;
+    public float boostAccel = 10000;
+    public bool readyToBoost;
+
     // Slope
     public float maxSlopeAngle = 35f;
 
@@ -64,9 +70,9 @@ public class PlayerMovement : MonoBehaviour
 
     // Variables
     float leftRightInput, forwardBackwardInput;
-    public bool jumpHeld, jumpDown;
+    public bool jumpHeld, jumpDown, boostHeld, boostDown;
     private Vector3 tiltInput, projForward, movementDirection, horizontal;
-    public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run, 5 = air after boost
+    public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
     private int consecutiveIdleFixedUpdates = 0;
 
     private void Awake()
@@ -88,7 +94,10 @@ public class PlayerMovement : MonoBehaviour
 
         if (grounded) // May be unnecessary
         {
-            speedState = 0;
+            if (speedState != 2)
+            {
+                speedState = 0;
+            }
         }
 
         Movement();
@@ -116,6 +125,16 @@ public class PlayerMovement : MonoBehaviour
         {
             jumpDown = Input.GetButtonDown("Jump");
         }
+
+        // boostHeld is true while the button is pressed
+        boostHeld = Input.GetButton("Fire3");
+
+        // boostDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
+        if (!boostDown)
+        {
+            boostDown = Input.GetButtonDown("Fire3");
+        }
+        
     }
 
     /// <summary>
@@ -155,6 +174,16 @@ public class PlayerMovement : MonoBehaviour
         // Resets jumpDown variable to false
         jumpDown = false;
 
+        // TODO: Change to a double click system
+        if (boostDown && !isWallRunning)
+        {
+            StartBoost();
+        } else if (isBoosting && !boostHeld)
+        {
+            StopBoost();
+        }
+        boostDown = false;
+
         // Limits player influence on movement while not grounded
         movementCoefficent = 1f;
         if (!grounded)
@@ -178,11 +207,15 @@ public class PlayerMovement : MonoBehaviour
                 rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
             }
         }
+        else if (speedState == 2) // Grounded boost
+        {
+            Boost();
+        }
         else if (speedState == 3) // Air after ground run
         {
             AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
         }
-        else if (speedState == 4) // Air after wallrun
+        else if (speedState == 4) // Air after wallrun or boost
         {
             AccelerateTo(movementDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
             if (horizontal.magnitude > maxWallSpeed)
@@ -202,7 +235,7 @@ public class PlayerMovement : MonoBehaviour
         //Vector2 horizontalMagRelative = FindVelRelativeToLook();
         //CounterMovement(horizontalMagRelative);
 
-        //Debug.Log(horizontal.magnitude);
+        Debug.Log(horizontal.magnitude);
     }
 
     /// <summary>
@@ -250,6 +283,48 @@ public class PlayerMovement : MonoBehaviour
         {
             movementDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
         }
+    }
+
+    private void StartBoost()
+    {
+        isBoosting = true;
+        speedState = 2;
+        //AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel); //Can be used as initial boost of extra acceleration
+        //subtract more boost meter on inital boost
+    }
+
+    private void Boost()
+    {
+        AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel);
+    }
+
+    private void StopBoost()
+    {
+        isBoosting = false;
+        if (grounded)
+        {
+            speedState = 0;
+        } else
+        {
+            speedState = 4;
+        }
+        
+    }
+
+    private void SideStep()
+    {
+        //Only while grounded
+
+        //if canSideStep (sideStep cooldown)
+        //Quick shift to left or right
+        //Translate to nearest lane
+
+        //Notes: Forces probably not good solution
+        //Altering position can be bad if they try to sidestep into wall
+
+        //Raycast check for closest lane
+        //If hit another object translate to next to that object
+        //if lane too close (just to the side of lane plane) check next closest lane (no idea how to do this)
     }
 
     /// <summary>
@@ -335,14 +410,22 @@ public class PlayerMovement : MonoBehaviour
             readyToDoubleJump = true;
 
             // state management
-            speedState = 0;
+            if (speedState != 2)
+            {
+                speedState = 0;
+            }
+            
         }
         else
         {
             grounded = false;
 
             // state management
-            if (speedState < 3 && !isWallRunning)
+            if (speedState == 2 && !isBoosting)
+            {
+                speedState = 4;
+            }
+            else if (speedState < 2 && !isWallRunning)
             {
                 speedState = 3;
             }
@@ -356,6 +439,11 @@ public class PlayerMovement : MonoBehaviour
     {
         float mouseX = Input.GetAxis("Mouse X") * sensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * sensitivity;
+        
+        //if (isBoosting)
+        //{
+        //    mouseX = Mathf.Clamp(mouseX, -100 * Time.deltaTime, 100 * Time.deltaTime);
+        //}
 
         //Find current look rotation
         Vector3 rot = playerCam.localRotation.eulerAngles;
@@ -474,7 +562,7 @@ public class PlayerMovement : MonoBehaviour
         } else
         {
             rb.useGravity = false;
-            rb.AddForce(-Vector3.up * 10);
+            rb.AddForce(-Vector3.up * 5);
         }
 
         Vector3 maxDirectionalSpeed = new Vector3(Math.Min(Math.Max(movementDirection.x * 2, -1), 1), 0, Math.Min(Math.Max(movementDirection.z * 2, -1), 1));
