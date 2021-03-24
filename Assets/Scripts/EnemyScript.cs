@@ -6,7 +6,7 @@ using UnityEngine;
 public class EnemyScript : MonoBehaviour
 {
     Rigidbody[] rigidbodies;
-    bool isRagdoll = false;
+    bool isAlive = true;
 
     // Start is called before the first frame update
     void Start()
@@ -18,22 +18,20 @@ public class EnemyScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetButtonDown("Fire2"))
-        {
-            ToggleRagdoll(false);
-            Debug.Log("we here");
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
         
     }
-    
-    private void ToggleRagdoll(bool v)
-    {
-        isRagdoll = !v;
 
+    public void Killed()
+    {
+        if (isAlive)
+        {
+            ToggleRagdoll(false);
+            isAlive = false;
+        }
+    }
+    
+    public void ToggleRagdoll(bool v)
+    {
         foreach (Rigidbody rigidbody in rigidbodies)
         {
             rigidbody.isKinematic = v;

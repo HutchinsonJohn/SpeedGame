@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -9,6 +10,9 @@ public class PlayerMovement : MonoBehaviour
     // Assingables
     public Transform playerCam;
     public Transform orientation;
+
+    public Text BoostText;
+    public Text SpeedDebug;
 
     private Rigidbody rb;
 
@@ -51,6 +55,11 @@ public class PlayerMovement : MonoBehaviour
     public bool isBoosting;
     public float boostAccel = 10000;
     public bool readyToBoost;
+    public int boostMeterLimit = 250; // 50 pts a second (1/fixedDeltaTime)
+    public int boostMeterVal = 250;  
+    private bool rechargeBoost = true;
+    public float boostCooldown = 1f;
+    public int rechargeRate = 2;
 
     // Slope
     public float maxSlopeAngle = 35f;
@@ -175,14 +184,24 @@ public class PlayerMovement : MonoBehaviour
         jumpDown = false;
 
         // TODO: Change to a double click system
-        if (boostDown && !isWallRunning)
+        if (boostDown)
         {
-            StartBoost();
-        } else if (isBoosting && !boostHeld)
+            if (boostMeterVal > 0 && !isWallRunning && rechargeBoost)
+            {
+                StartBoost();
+            }
+            // Else play boost fail noise
+        } else if (isBoosting && (!boostHeld || boostMeterVal <= 0))
         {
             StopBoost();
         }
         boostDown = false;
+
+        if (rechargeBoost && boostMeterVal < boostMeterLimit)
+        {
+            boostMeterVal += rechargeRate;
+            boostMeterVal = Math.Min(boostMeterVal, boostMeterLimit);
+        }
 
         // Limits player influence on movement while not grounded
         movementCoefficent = 1f;
@@ -194,48 +213,40 @@ public class PlayerMovement : MonoBehaviour
         horizontal = new Vector3(rb.velocity.x, 0, rb.velocity.z); // Should be able to set this even earlier if needed
 
         // Movement force is handled depending on which state the player is currently in (switch to case later)
-        if (speedState == 0) // Running on ground
+        switch (speedState)
         {
-            AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
+            case 0:
+                AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
+                break;
+            case 1:
+                Wallrun();
+                break;
+            case 2:
+                Boost();
+                break;
+            case 3:
+                AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
+                break;
+            case 4:
+                AccelerateTo(movementDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
+                break;
+            default:
+                horizontal = horizontal.normalized * 40;
+                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
+                Debug.Log("Something went wrong with speedState");
+                break;
         }
-        else if (speedState == 1) // Wallrunning
-        {
-            Wallrun();
-            //if (horizontal.magnitude > maxWallSpeed)
-            //{
-            //    horizontal = horizontal.normalized * maxWallSpeed;
-            //    rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-            //}
-        }
-        else if (speedState == 2) // Grounded boost
-        {
-            Boost();
-        }
-        else if (speedState == 3) // Air after ground run
-        {
-            AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-        }
-        else if (speedState == 4) // Air after wallrun or boost
-        {
-            AccelerateTo(movementDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-            //if (horizontal.magnitude > maxWallSpeed)
-            //{
-            //    horizontal = horizontal.normalized * maxWallSpeed;
-            //    rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-            //}
-        }
-        else if (horizontal.magnitude > 40) //Unnecessary
-        {
-            horizontal = horizontal.normalized * 40;
-            rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-        }
+
+        SpeedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
+        BoostText.text = "Boost " + boostMeterVal.ToString();
+
         //Debug.Log(speedState);
 
         // Handles player slowdown when there is little or no player directional input (no longer necessary)
         //Vector2 horizontalMagRelative = FindVelRelativeToLook();
         //CounterMovement(horizontalMagRelative);
 
-        Debug.Log(horizontal.magnitude);
+        //Debug.Log(horizontal.magnitude);
     }
 
     /// <summary>
@@ -291,11 +302,13 @@ public class PlayerMovement : MonoBehaviour
         speedState = 2;
         //AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel); //Can be used as initial boost of extra acceleration
         //subtract more boost meter on inital boost
+        rechargeBoost = false;
     }
 
     private void Boost()
     {
         AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel);
+        boostMeterVal--;
     }
 
     private void StopBoost()
@@ -308,7 +321,12 @@ public class PlayerMovement : MonoBehaviour
         {
             speedState = 4;
         }
-        
+        Invoke(nameof(RechargeBoost), boostCooldown);
+    }
+
+    private void RechargeBoost()
+    {
+        rechargeBoost = true;
     }
 
     private void SideStep()
@@ -368,18 +386,23 @@ public class PlayerMovement : MonoBehaviour
         Vector3 jumpDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
 
         // Probably a better way to do this
-        if (speedState == 3)
+        switch (speedState)
         {
-            AccelerateTo(jumpDirection * Mathf.Max(maxSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+            case 2:
+                AccelerateTo(jumpDirection * maxBoostSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+                break;
+            case 3:
+                AccelerateTo(jumpDirection * Mathf.Max(maxSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+                break;
+            case 4:
+                AccelerateTo(jumpDirection * Mathf.Max(maxWallSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+                break;
+            default:
+                Debug.Log("Something went wrong with speedState in DoubleJump" + speedState);
+                AccelerateTo(jumpDirection * maxSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+                break;
         }
-        else if (speedState == 4)
-        {
-            AccelerateTo(jumpDirection * Mathf.Max(maxWallSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
-        } else // Should not be here
-        {
-            Debug.Log("SHOULD NOT BE HERE");
-            AccelerateTo(jumpDirection * maxSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
-        }
+
         rb.AddForce(Vector2.up * jumpForce);
 
         // Player is unable to double jump again until they touch the ground or a wallrunnable wall
@@ -645,6 +668,8 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         }
+
+        // TODO: Redo force to use accelerateTo
 
         Vector3 jumpDirection = new Vector3((movementDirection.x/2 + wallHitInfo.normal.x), 1, (movementDirection.z/2 + wallHitInfo.normal.z)); // Can be seperated from vertical component to better control horizontal push off wall
         rb.AddForce(jumpDirection * jumpForce);

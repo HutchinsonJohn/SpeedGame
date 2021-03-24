@@ -7,7 +7,7 @@ public class Shooting : MonoBehaviour
 
     private bool shootDown;
 
-    public Transform gunTip, camera;
+    public Transform gunTip, mainCamera;
 
     public LayerMask enemy;
 
@@ -24,11 +24,13 @@ public class Shooting : MonoBehaviour
         RaycastHit hit;
         if (shootDown)
         {
-            if (Physics.Raycast(camera.position, camera.forward, out hit, 10000, enemy))
+            if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 10000))
             {
-                
+                if (enemy == (enemy | (1 << hit.collider.gameObject.layer)))
+                {
+                    hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
+                }
             }
-
         }
     }
 }
