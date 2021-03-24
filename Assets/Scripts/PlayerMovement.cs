@@ -69,7 +69,7 @@ public class PlayerMovement : MonoBehaviour
     public float airborneCounterCoefficent = .1f;
 
     // Variables
-    float leftRightInput, forwardBackwardInput;
+    private float leftRightInput, forwardBackwardInput;
     public bool jumpHeld, jumpDown, boostHeld, boostDown;
     private Vector3 tiltInput, projForward, movementDirection, horizontal;
     public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
@@ -201,11 +201,11 @@ public class PlayerMovement : MonoBehaviour
         else if (speedState == 1) // Wallrunning
         {
             Wallrun();
-            if (horizontal.magnitude > maxWallSpeed)
-            {
-                horizontal = horizontal.normalized * maxWallSpeed;
-                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-            }
+            //if (horizontal.magnitude > maxWallSpeed)
+            //{
+            //    horizontal = horizontal.normalized * maxWallSpeed;
+            //    rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
+            //}
         }
         else if (speedState == 2) // Grounded boost
         {
@@ -218,11 +218,11 @@ public class PlayerMovement : MonoBehaviour
         else if (speedState == 4) // Air after wallrun or boost
         {
             AccelerateTo(movementDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-            if (horizontal.magnitude > maxWallSpeed)
-            {
-                horizontal = horizontal.normalized * maxWallSpeed;
-                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-            }
+            //if (horizontal.magnitude > maxWallSpeed)
+            //{
+            //    horizontal = horizontal.normalized * maxWallSpeed;
+            //    rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
+            //}
         }
         else if (horizontal.magnitude > 40) //Unnecessary
         {
@@ -370,11 +370,11 @@ public class PlayerMovement : MonoBehaviour
         // Probably a better way to do this
         if (speedState == 3)
         {
-            AccelerateTo(jumpDirection * maxSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+            AccelerateTo(jumpDirection * Mathf.Max(maxSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
         }
         else if (speedState == 4)
         {
-            AccelerateTo(jumpDirection * maxWallSpeed, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
+            AccelerateTo(jumpDirection * Mathf.Max(maxWallSpeed, horizontal.magnitude), horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce, horizontal.magnitude / Time.fixedDeltaTime + horizontalDoubleJumpForce);
         } else // Should not be here
         {
             Debug.Log("SHOULD NOT BE HERE");
