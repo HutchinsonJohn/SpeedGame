@@ -8,6 +8,11 @@ public class EnemyScript : MonoBehaviour
     Rigidbody[] rigidbodies;
     bool isAlive = true;
 
+    public Transform mainCamera;
+    public Rigidbody rb;
+
+    public bool wasShot;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -21,10 +26,11 @@ public class EnemyScript : MonoBehaviour
         
     }
 
-    public void Killed()
+    public void Killed(bool wasShot)
     {
         if (isAlive)
         {
+            this.wasShot = wasShot;
             ToggleRagdoll(false);
             isAlive = false;
         }
@@ -35,6 +41,16 @@ public class EnemyScript : MonoBehaviour
         foreach (Rigidbody rigidbody in rigidbodies)
         {
             rigidbody.isKinematic = v;
+            if (!v)
+            {
+                if (wasShot)
+                {
+                    rigidbody.AddForce(mainCamera.forward * 500);
+                } else
+                {
+                    rigidbody.AddForce(mainCamera.forward * 500 + rb.velocity * 100);
+                }
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ public class Shooting : MonoBehaviour
             {
                 if(enemy == (enemy | (1 << hit.collider.gameObject.layer)))
                 {
-                    hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
+                    hit.transform.SendMessageUpwards("Killed", true, SendMessageOptions.DontRequireReceiver);
                 }
             }
             //if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 10000))

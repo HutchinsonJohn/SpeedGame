@@ -51,7 +51,7 @@ public class Swing : MonoBehaviour
                 Collider[] hits = Physics.OverlapCapsule(mainCamera.position + mainCamera.forward, mainCamera.position + mainCamera.forward * 2, 1, enemy);
                 foreach (Collider hit in hits)
                 {
-                    hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
+                    hit.transform.SendMessageUpwards("Killed", false, SendMessageOptions.DontRequireReceiver);
                     // TODO: Change layer of enemy hit to dead enemy layer
                     Player.SendMessage("RefillBoost", SendMessageOptions.DontRequireReceiver);
                 }
