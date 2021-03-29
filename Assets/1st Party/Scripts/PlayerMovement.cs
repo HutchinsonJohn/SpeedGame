@@ -11,8 +11,11 @@ public class PlayerMovement : MonoBehaviour
     public Transform playerCam;
     public Transform orientation;
 
-    public Text BoostText;
+    public Image Fill;
     public Text SpeedDebug;
+
+    public Color boostReady;
+    public Color boostNotReady;
 
     private Rigidbody rb;
 
@@ -238,7 +241,15 @@ public class PlayerMovement : MonoBehaviour
         }
 
         SpeedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
-        BoostText.text = "Boost " + boostMeterVal.ToString();
+        if (rechargeBoost || isBoosting)
+        {
+            Fill.color = boostReady;
+        } else
+        {
+            Fill.color = boostNotReady;
+        }
+        Fill.fillAmount = (float)boostMeterVal / boostMeterLimit;
+        //BoostText.text = "Boost " + boostMeterVal.ToString();
 
         //Debug.Log(speedState);
 
@@ -619,6 +630,11 @@ public class PlayerMovement : MonoBehaviour
 
                     isWallRunning = true;
                     readyToDoubleJump = true;
+
+                    if (isBoosting)
+                    {
+                        StopBoost();
+                    }
 
                     // state management
                     speedState = 1;
