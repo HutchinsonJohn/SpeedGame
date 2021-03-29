@@ -11,6 +11,8 @@ public class Shooting : MonoBehaviour
 
     public LayerMask enemy;
 
+    public float bulletSize = 0.1f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -24,13 +26,20 @@ public class Shooting : MonoBehaviour
         RaycastHit hit;
         if (shootDown)
         {
-            if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 10000))
+            if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out hit))
             {
-                if (enemy == (enemy | (1 << hit.collider.gameObject.layer)))
+                if(enemy == (enemy | (1 << hit.collider.gameObject.layer)))
                 {
                     hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
                 }
             }
+            //if (Physics.Raycast(mainCamera.position, mainCamera.forward, out hit, 10000))
+            //{
+            //    if (enemy == (enemy | (1 << hit.collider.gameObject.layer)))
+            //    {
+            //        hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
+            //    }
+            //}
         }
     }
 }

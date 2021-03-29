@@ -15,6 +15,8 @@ public class Swing : MonoBehaviour
 
     public Transform mainCamera;
 
+    public Transform Player;
+
     public float swordLength;
 
     // This variable is moronic hard coding in action
@@ -50,6 +52,8 @@ public class Swing : MonoBehaviour
                 foreach (Collider hit in hits)
                 {
                     hit.transform.SendMessageUpwards("Killed", SendMessageOptions.DontRequireReceiver);
+                    // TODO: Change layer of enemy hit to dead enemy layer
+                    Player.SendMessage("RefillBoost", SendMessageOptions.DontRequireReceiver);
                 }
                 animationFrames++;
             } else if (animationFrames > 14)

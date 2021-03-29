@@ -251,7 +251,7 @@ public class PlayerMovement : MonoBehaviour
         Fill.fillAmount = (float)boostMeterVal / boostMeterLimit;
         //BoostText.text = "Boost " + boostMeterVal.ToString();
 
-        //Debug.Log(speedState);
+        //Debug.Log("SpeedState: " + speedState + "\nGrounded: " + grounded + "\nWallrunning: " + isWallRunning + "\nBoosting: " + isBoosting);
 
         // Handles player slowdown when there is little or no player directional input (no longer necessary)
         //Vector2 horizontalMagRelative = FindVelRelativeToLook();
@@ -340,6 +340,11 @@ public class PlayerMovement : MonoBehaviour
         rechargeBoost = true;
     }
 
+    public void RefillBoost()
+    {
+        boostMeterVal = boostMeterLimit;
+    }
+
     private void SideStep()
     {
         //Only while grounded
@@ -387,10 +392,10 @@ public class PlayerMovement : MonoBehaviour
     private void DoubleJump()
     {
         // Resets vertical velocity to 0 if descending
-        if (rb.velocity.y < 0)
-        {
+        //if (rb.velocity.y < 0)
+        //{
             rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-        }
+        //}
 
         // Adds force in direction of player movement and upwards
         // (serves to allow player to use double jump to significantly alter horizontal direction midair)
@@ -687,8 +692,9 @@ public class PlayerMovement : MonoBehaviour
 
         // TODO: Redo force to use accelerateTo
 
-        Vector3 jumpDirection = new Vector3((movementDirection.x/2 + wallHitInfo.normal.x), 1, (movementDirection.z/2 + wallHitInfo.normal.z)); // Can be seperated from vertical component to better control horizontal push off wall
-        rb.AddForce(jumpDirection * jumpForce);
+        Vector3 jumpDirection = new Vector3((movementDirection.x/2 + wallHitInfo.normal.x), 0, (movementDirection.z/2 + wallHitInfo.normal.z)); // Can be seperated from vertical component to better control horizontal push off wall
+        AccelerateTo(jumpDirection.normalized * maxWallSpeed, wallJumpForce, wallJumpForce);
+        rb.AddForce(Vector3.up * jumpForce);
         StopWallRun();
     }
 
