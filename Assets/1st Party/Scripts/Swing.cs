@@ -31,7 +31,7 @@ public class Swing : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
         swingDown = Input.GetButtonDown("Fire2");
         if (swingDown)

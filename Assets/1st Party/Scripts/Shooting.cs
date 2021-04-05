@@ -20,7 +20,7 @@ public class Shooting : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
         shootDown = Input.GetButtonDown("Fire1");
         RaycastHit hit;

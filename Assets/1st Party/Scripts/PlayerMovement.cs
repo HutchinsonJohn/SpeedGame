@@ -307,21 +307,29 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets speedState, isBoosting, and rechargeBoost accordingly
+    /// </summary>
     private void StartBoost()
     {
         isBoosting = true;
         speedState = 2;
         //AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel); //Can be used as initial boost of extra acceleration
-        //subtract more boost meter on inital boost
         rechargeBoost = false;
     }
 
+    /// <summary>
+    /// Handles movement force while boosting, decrements boostMeterVal
+    /// </summary>
     private void Boost()
     {
         AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel);
         boostMeterVal--;
     }
 
+    /// <summary>
+    /// Sets speedState, isBoosting, and rechargeBoost accordingly
+    /// </summary>
     private void StopBoost()
     {
         isBoosting = false;
@@ -335,11 +343,17 @@ public class PlayerMovement : MonoBehaviour
         Invoke(nameof(RechargeBoost), boostCooldown);
     }
 
+    /// <summary>
+    /// Sets rechargeBoost to true
+    /// </summary>
     private void RechargeBoost()
     {
         rechargeBoost = true;
     }
 
+    /// <summary>
+    /// Instantly refills the boost meter to boostMeterLimit
+    /// </summary>
     public void RefillBoost()
     {
         boostMeterVal = boostMeterLimit;
