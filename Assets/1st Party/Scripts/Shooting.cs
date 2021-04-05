@@ -13,20 +13,22 @@ public class Shooting : MonoBehaviour
 
     public float bulletSize = 0.1f;
 
+    private FieldOfView fow;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        fow = GetComponent<FieldOfView>();
     }
 
     // Update is called once per frame
     void LateUpdate()
     {
+        //fow.FindTarget();
         shootDown = Input.GetButtonDown("Fire1");
-        RaycastHit hit;
         if (shootDown)
         {
-            if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out hit))
+            if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out RaycastHit hit))
             {
                 if(enemy == (enemy | (1 << hit.collider.gameObject.layer)))
                 {
