@@ -87,6 +87,15 @@ public class PlayerMovement : MonoBehaviour
     public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
     private int consecutiveIdleFixedUpdates = 0;
 
+    // Health
+    private bool isDying;
+    private int health = 5;
+    private float regenCooldown = 0;
+
+    // UI
+    public GameObject gameOverCanvas;
+    public Image healthMeter;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -718,6 +727,22 @@ public class PlayerMovement : MonoBehaviour
     private void resetCannotRunOnWallObject()
     {
         cannotRunOnWallObject = null;
+    }
+
+    private void Hit()
+    {
+        if (!isDying)
+        {
+            health--;
+            regenCooldown = 5f;
+            //TODO: play damage sound or make screen turn red briefly
+            healthMeter.fillAmount = 0.25f + health * 0.15f;
+            if (health < 1)
+            {
+                isDying = true;
+                gameOverCanvas.SetActive(true);
+            }
+        }
     }
 
 }
