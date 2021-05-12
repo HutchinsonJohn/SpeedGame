@@ -55,11 +55,16 @@ public class PauseMenu : MonoBehaviour
 
     public void Retry()
     {
-        SceneManager.LoadScene(PlayerPrefs.GetInt("CurrentLevel"));
+        SceneManager.LoadScene(player.currentLevel);
     }
 
     public void QuitGame()
     {
         Application.Quit();
+    }
+
+    public void NextLevel()
+    {
+        SceneManager.LoadScene(player.currentLevel+1);
     }
 }

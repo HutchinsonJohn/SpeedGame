@@ -117,6 +117,8 @@ public class PlayerMovement : MonoBehaviour
     private float levelTime;
     private Coroutine readyGoCoroutine;
 
+    private int killedEnemies;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -268,19 +270,26 @@ public class PlayerMovement : MonoBehaviour
 
     private bool endReached;
     public int currentLevel;
+    public GameObject winScreen;
+    public TMP_Text yourTime;
+    public TMP_Text bestTime;
+    public GameObject nextLevel;
     private void EndReached()
     {
         endReached = true;
         //display level stat screen
+        //display accuracy in future
+        winScreen.SetActive(true);
         switch (currentLevel)
         {
             case 0:
                 if (levelTime < PlayerPrefs.GetFloat("Level0BestTime", float.MaxValue))
                 {
-                    //Display new best!
+                    // TODO: Display new best!
                     PlayerPrefs.SetFloat("Level0BestTime", levelTime);
                 }
-                //Display new time
+                yourTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(levelTime);
                 break;
             case 1:
                 if (levelTime < PlayerPrefs.GetFloat("Level1BestTime", float.MaxValue))
@@ -288,7 +297,8 @@ public class PlayerMovement : MonoBehaviour
                     //Display new best!
                     PlayerPrefs.SetFloat("Level1BestTime", levelTime);
                 }
-                //Display new time
+                yourTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(levelTime);
                 break;
             case 2:
                 if (levelTime < PlayerPrefs.GetFloat("Level2BestTime", float.MaxValue))
@@ -296,12 +306,16 @@ public class PlayerMovement : MonoBehaviour
                     //Display new best!
                     PlayerPrefs.SetFloat("Level2BestTime", levelTime);
                 }
-                //Display new time
+                yourTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(levelTime);
                 break;
             default:
                 break;
         }
-        //Display best time
+        if (currentLevel == 2)
+        {
+            nextLevel.SetActive(false);
+        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -326,6 +340,7 @@ public class PlayerMovement : MonoBehaviour
                 if (hit.transform.tag == "Enemy")
                 {
                     hit.transform.SendMessageUpwards("Killed", true);
+                    killedEnemies++;
                 }
             }
         }
