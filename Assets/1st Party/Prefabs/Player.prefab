@@ -1,5 +1,79 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1743115815
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1743115816}
+  - component: {fileID: 1743115818}
+  m_Layer: 0
+  m_Name: Camera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1743115816
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1743115815}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 3293766123945948437}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!20 &1743115818
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1743115815}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 3
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_FocalLength: 50
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 8
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4096
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
 --- !u!1 &1140803431180287578
 GameObject:
   m_ObjectHideFlags: 0
@@ -55,7 +129,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1140803431737215626}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.43, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1140803431180287577}
@@ -77,7 +151,7 @@ GameObject:
   - component: {fileID: 1140803431810428672}
   m_Layer: 11
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -212,7 +286,7 @@ MonoBehaviour:
   maxWallSpeed: 15
   sameWallCooldown: 3
   wallRunStickForce: 100
-  wallJumpForce: 1000
+  wallJumpForce: 575
   maxBoostSpeed: 20
   isBoosting: 0
   boostAccel: 10000
@@ -235,6 +309,10 @@ MonoBehaviour:
   isDying: 0
   gameOverCanvas: {fileID: 0}
   healthMeter: {fileID: 0}
+  akShot: {fileID: 7741609566920517962}
+  bulletSize: 0.1
+  swordAnimator: {fileID: 5463631101522535368}
+  gunAnimator: {fileID: 7135772988405520935}
 --- !u!1 &1748758070690919053
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,24 +363,6 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!114 &916313935352520734
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2155985984614014366}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13b9bf3b880797947906b165e3eb5d9a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gunTip: {fileID: 8889520684361399292}
-  mainCamera: {fileID: 3293766123945948437}
-  enemy:
-    serializedVersion: 2
-    m_Bits: 1024
-  bulletSize: 0.1
 --- !u!1 &3736938808917206224
 GameObject:
   m_ObjectHideFlags: 0
@@ -335,6 +395,7 @@ Transform:
   m_Children:
   - {fileID: 4865616755776810729}
   - {fileID: 1415971137498619088}
+  - {fileID: 1743115816}
   m_Father: {fileID: 1140803431810428678}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -369,7 +430,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 3895
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -396,7 +457,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3736938808917206224}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: df8689ae6a1a393469419c57185f96b6, type: 3}
   m_Name: 
@@ -970,26 +1031,6 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!114 &904607229162450506
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5523944782476832506}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 605356063df34774295ee6d15c3e09ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enemy:
-    serializedVersion: 2
-    m_Bits: 1024
-  swordAnimator: {fileID: 5463631101522535368}
-  gunAnimator: {fileID: 7135772988405520935}
-  mainCamera: {fileID: 3293766123945948437}
-  Player: {fileID: 1140803431810428678}
-  swordLength: 0
 --- !u!1 &6464203034408227375
 GameObject:
   m_ObjectHideFlags: 0
@@ -1155,9 +1196,25 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1415971137498619088}
     m_Modifications:
+    - target: {fileID: 1155008502347162, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
+      propertyPath: m_Layer
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1607072980388442, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
+      propertyPath: m_Layer
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1625619221437068, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
+      propertyPath: m_Layer
+      value: 12
+      objectReference: {fileID: 0}
     - target: {fileID: 1719131515888008, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
       propertyPath: m_Name
       value: Assault_Rifle_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 1719131515888008, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
+      propertyPath: m_Layer
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 4398818239886518, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
       propertyPath: m_RootOrder
@@ -1205,15 +1262,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
---- !u!4 &2153321974488533152 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4398818239886518, guid: 33f6247810b654041bccca4adbd93f45,
-    type: 3}
-  m_PrefabInstance: {fileID: 2156523141096029206}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2155985984614014366 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1719131515888008, guid: 33f6247810b654041bccca4adbd93f45,
+    type: 3}
+  m_PrefabInstance: {fileID: 2156523141096029206}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2153321974488533152 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4398818239886518, guid: 33f6247810b654041bccca4adbd93f45,
     type: 3}
   m_PrefabInstance: {fileID: 2156523141096029206}
   m_PrefabAsset: {fileID: 0}
@@ -1227,6 +1284,10 @@ PrefabInstance:
     - target: {fileID: 1902420336963186, guid: 0a3f086a470be0d41b7e88530979e32a, type: 3}
       propertyPath: m_Name
       value: Prefab_Sword_Cyber_Nightstrike
+      objectReference: {fileID: 0}
+    - target: {fileID: 1902420336963186, guid: 0a3f086a470be0d41b7e88530979e32a, type: 3}
+      propertyPath: m_Layer
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 4272613857901706, guid: 0a3f086a470be0d41b7e88530979e32a, type: 3}
       propertyPath: m_RootOrder

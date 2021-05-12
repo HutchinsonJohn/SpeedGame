@@ -62,7 +62,6 @@ public class EnemyScript : MonoBehaviour
             {
                 rotateTowards.y = horizontalMagnitude * upperViewAngle;
             }
-            Debug.Log(rotateTowards);
             transform.forward = Vector3.RotateTowards(
                 transform.forward, 
                 rotateTowards,
@@ -89,6 +88,7 @@ public class EnemyScript : MonoBehaviour
             animator.enabled = false;
             ToggleRagdoll(false);
             isAlive = false;
+            StopAllCoroutines();
         }
     }
     

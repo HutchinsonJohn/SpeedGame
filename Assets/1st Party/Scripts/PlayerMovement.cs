@@ -101,7 +101,10 @@ public class PlayerMovement : MonoBehaviour
     private float shootCooldown;
     public AudioSource akShot;
     public float bulletSize = 0.1f;
-    private LayerMask enemy;
+    public LayerMask enemy;
+
+    public Animator swordAnimator;
+    public Animator gunAnimator;
 
     private void Awake()
     {
@@ -113,12 +116,11 @@ public class PlayerMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         mainCamera = Camera.main.transform;
-        enemy = LayerMask.NameToLayer("Enemy");
     }
 
     private void FixedUpdate()
     {
-        if (PauseMenu.GameIsPaused)
+        if (PauseMenu.GameIsPaused || isDying)
         {
             return;
         }
@@ -140,7 +142,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if (PauseMenu.GameIsPaused)
+        if (PauseMenu.GameIsPaused || isDying)
         {
             return;
         }
@@ -161,7 +163,21 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
         Look();
-        Shoot();
+
+        if (shootCooldown > 0)
+        {
+            shootCooldown -= Time.deltaTime;
+        }
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            Shoot();
+        } else if (Input.GetButtonDown("Fire2"))
+        {
+            Swing();
+        }
+        Swinging();
+        
     }
 
     /// <summary>
@@ -194,7 +210,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Shoot()
     {
-        if (Input.GetButtonDown("Fire1") && shootCooldown <= 0)
+        if (shootCooldown <= 0 && !swinging)
         {
             akShot.Play();
             shootCooldown = .1f;
@@ -205,9 +221,52 @@ public class PlayerMovement : MonoBehaviour
                     hit.transform.SendMessageUpwards("Killed", true);
                 }
             }
-        } else if (shootCooldown > 0)
+        }
+    }
+
+    private bool swinging;
+    private float timeSwinging;
+
+    private void Swing()
+    {
+        if (!swinging)
         {
-            shootCooldown -= Time.deltaTime;
+            swordAnimator.SetTrigger("Swing");
+            gunAnimator.SetTrigger("Swing");
+            swinging = true;
+            timeSwinging = 0;
+        }
+    }
+
+    private void Swinging()
+    {
+        if (swinging)
+        {
+            timeSwinging += Time.deltaTime;
+            if (timeSwinging > .1f && timeSwinging < .3f)
+            {
+                Collider[] hits = Physics.OverlapCapsule(mainCamera.position + mainCamera.forward, mainCamera.position + mainCamera.forward * 2, 1, enemy);
+                foreach (Collider hit in hits)
+                {
+                    hit.transform.SendMessageUpwards("Killed", false);
+                    // TODO: Change layer of enemy hit to dead enemy layer
+                    RefillBoost();
+                }
+            }
+            else if (timeSwinging > .4f)
+            {
+                swinging = false;
+            }
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (timeSwinging > .1f && timeSwinging < .3f)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward, 1);
+            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward * 2, 1);
         }
     }
 
@@ -794,6 +853,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 isDying = true;
                 gameOverCanvas.SetActive(true);
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
         }
     }
