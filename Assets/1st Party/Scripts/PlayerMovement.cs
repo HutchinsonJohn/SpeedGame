@@ -56,15 +56,15 @@ public class PlayerMovement : MonoBehaviour
     public float wallJumpForce = 1000;
 
     // Boost
-    public float maxBoostSpeed = 30;
+    private float maxBoostSpeed = 20f;
     public bool isBoosting;
-    public float boostAccel = 10000;
+    private float boostAccel = 1000;
     public bool readyToBoost;
-    public int boostMeterLimit = 250; // 50 pts a second (1/fixedDeltaTime)
-    public int boostMeterVal = 250;  
+    private int boostMeterLimit = 100; // 50 pts a second (1/fixedDeltaTime)
+    private int boostMeterVal = 100;  
     private bool rechargeBoost = true;
-    public float boostCooldown = 1f;
-    public int rechargeRate = 2;
+    private float boostCooldown = 1f;
+    private int rechargeRate = 2;
 
     // Slope
     public float maxSlopeAngle = 35f;
@@ -112,7 +112,7 @@ public class PlayerMovement : MonoBehaviour
     public Animator swordAnimator;
     public Animator gunAnimator;
 
-    private bool starting = true;
+    public bool starting = true;
     public bool tutorial;
     private float levelTime;
     private Coroutine readyGoCoroutine;
@@ -274,31 +274,33 @@ public class PlayerMovement : MonoBehaviour
     public TMP_Text yourTime;
     public TMP_Text bestTime;
     public GameObject nextLevel;
+    public GameObject defeatAllEnemies;
+    public int numberOfEnemies;
     private void EndReached()
     {
+        if (killedEnemies < numberOfEnemies)
+        {
+            isDying = true;
+            gameOverCanvas.SetActive(true);
+            defeatAllEnemies.SetActive(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
         endReached = true;
         //display level stat screen
         //display accuracy in future
         winScreen.SetActive(true);
         switch (currentLevel)
         {
-            case 0:
-                if (levelTime < PlayerPrefs.GetFloat("Level0BestTime", float.MaxValue))
-                {
-                    // TODO: Display new best!
-                    PlayerPrefs.SetFloat("Level0BestTime", levelTime);
-                }
-                yourTime.text = FormatTime(levelTime);
-                bestTime.text = FormatTime(levelTime);
-                break;
             case 1:
                 if (levelTime < PlayerPrefs.GetFloat("Level1BestTime", float.MaxValue))
                 {
-                    //Display new best!
+                    // TODO: Display new best!
                     PlayerPrefs.SetFloat("Level1BestTime", levelTime);
                 }
                 yourTime.text = FormatTime(levelTime);
-                bestTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(PlayerPrefs.GetFloat("Level1BestTime"));
                 break;
             case 2:
                 if (levelTime < PlayerPrefs.GetFloat("Level2BestTime", float.MaxValue))
@@ -307,7 +309,16 @@ public class PlayerMovement : MonoBehaviour
                     PlayerPrefs.SetFloat("Level2BestTime", levelTime);
                 }
                 yourTime.text = FormatTime(levelTime);
-                bestTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(PlayerPrefs.GetFloat("Level2BestTime"));
+                break;
+            case 3:
+                if (levelTime < PlayerPrefs.GetFloat("Level3BestTime", float.MaxValue))
+                {
+                    //Display new best!
+                    PlayerPrefs.SetFloat("Level3BestTime", levelTime);
+                }
+                yourTime.text = FormatTime(levelTime);
+                bestTime.text = FormatTime(PlayerPrefs.GetFloat("Level3BestTime"));
                 break;
             default:
                 break;
@@ -340,7 +351,6 @@ public class PlayerMovement : MonoBehaviour
                 if (hit.transform.tag == "Enemy")
                 {
                     hit.transform.SendMessageUpwards("Killed", true);
-                    killedEnemies++;
                 }
             }
         }
@@ -371,7 +381,6 @@ public class PlayerMovement : MonoBehaviour
                 foreach (Collider hit in hits)
                 {
                     hit.transform.SendMessageUpwards("Killed", false);
-                    // TODO: Change layer of enemy hit to dead enemy layer
                     RefillBoost();
                 }
             }
@@ -380,6 +389,11 @@ public class PlayerMovement : MonoBehaviour
                 swinging = false;
             }
         }
+    }
+
+    private void IncrementKills()
+    {
+        killedEnemies++;
     }
 
     private void OnDrawGizmos()
@@ -432,7 +446,7 @@ public class PlayerMovement : MonoBehaviour
         // TODO: Change to a double click system
         if (boostDown)
         {
-            if (boostMeterVal > 0 && !isWallRunning && rechargeBoost)
+            if (boostMeterVal > 0 && !isWallRunning && rechargeBoost && !isBoosting)
             {
                 StartBoost();
             }
@@ -602,6 +616,7 @@ public class PlayerMovement : MonoBehaviour
     public void RefillBoost()
     {
         boostMeterVal = boostMeterLimit;
+        rechargeBoost = true;
     }
 
     private void SideStep()

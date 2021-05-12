@@ -9,7 +9,7 @@ public class EnemyScript : MonoBehaviour
 
     private Animator animator;
     private Transform mainCameraTransform;
-    public Rigidbody rbPlayer;
+    private Rigidbody rbPlayer;
     private FieldOfView fow;
     private PlayerController playerController;
 
@@ -36,6 +36,7 @@ public class EnemyScript : MonoBehaviour
         fow = GetComponent<FieldOfView>();
         playerController = GetComponent<PlayerController>();
         playerController.SetArsenal("AK-74M");
+        rbPlayer = GameObject.Find("Player").GetComponent<Rigidbody>();
         ToggleRagdoll(true);
     }
 
@@ -88,7 +89,9 @@ public class EnemyScript : MonoBehaviour
             animator.enabled = false;
             ToggleRagdoll(false);
             isAlive = false;
+            tag = "DeadEnemy";
             StopAllCoroutines();
+            rbPlayer.SendMessage("IncrementKills");
         }
     }
     
@@ -111,7 +114,7 @@ public class EnemyScript : MonoBehaviour
     }
 
     Vector3 gunHeight = new Vector3(0, 1.4f, 0);
-    private float movementShotSpreadCoefficient = 0.015f;
+    private float movementShotSpreadCoefficient = 0.005f;
     private float stationaryShotSpread = 0.01f;
     /// <summary>
     /// Handles individual shots and hit registration

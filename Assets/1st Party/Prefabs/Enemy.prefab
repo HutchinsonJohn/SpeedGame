@@ -156,7 +156,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7592274990195888329}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 6, y: 1, z: -11}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children:
@@ -251,11 +251,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f762e5bfa3334a4db0c7709fd47f5a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rbPlayer: {fileID: 0}
   wasShot: 0
   targetLayersMask:
     serializedVersion: 2
-    m_Bits: 3841
+    m_Bits: 2817
   akShot: {fileID: 7645386824125798818}
   rotationSpeed: 3.1415927
 --- !u!114 &4517585482055951188
@@ -271,7 +270,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   viewRadius: 40
-  viewAngle: 170
+  viewAngle: 360
   targetMask:
     serializedVersion: 2
     m_Bits: 2048
