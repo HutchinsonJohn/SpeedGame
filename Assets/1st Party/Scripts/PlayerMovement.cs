@@ -88,13 +88,20 @@ public class PlayerMovement : MonoBehaviour
     private int consecutiveIdleFixedUpdates = 0;
 
     // Health
-    private bool isDying;
+    public bool isDying;
     private int health = 5;
     private float regenCooldown = 0;
 
     // UI
     public GameObject gameOverCanvas;
     public Image healthMeter;
+
+    // Shooting
+    private Transform mainCamera;
+    private float shootCooldown;
+    public AudioSource akShot;
+    public float bulletSize = 0.1f;
+    private LayerMask enemy;
 
     private void Awake()
     {
@@ -105,10 +112,17 @@ public class PlayerMovement : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        mainCamera = Camera.main.transform;
+        enemy = LayerMask.NameToLayer("Enemy");
     }
 
     private void FixedUpdate()
     {
+        if (PauseMenu.GameIsPaused)
+        {
+            return;
+        }
+
         CheckGround();
         SetMovementDirection();
         CheckForWall();
@@ -126,8 +140,28 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (PauseMenu.GameIsPaused)
+        {
+            return;
+        }
+
+        if (health < 5)
+        {
+            if (regenCooldown <= 0f)
+            {
+                health++;
+                healthMeter.fillAmount = 0.25f + health * 0.15f;
+                regenCooldown = .5f;
+            }
+            else
+            {
+                regenCooldown -= Time.deltaTime;
+            }
+        }
+
         MyInput();
         Look();
+        Shoot();
     }
 
     /// <summary>
@@ -156,6 +190,25 @@ public class PlayerMovement : MonoBehaviour
             boostDown = Input.GetButtonDown("Fire3");
         }
         
+    }
+
+    private void Shoot()
+    {
+        if (Input.GetButtonDown("Fire1") && shootCooldown <= 0)
+        {
+            akShot.Play();
+            shootCooldown = .1f;
+            if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out RaycastHit hit))
+            {
+                if (hit.transform.tag == "Enemy")
+                {
+                    hit.transform.SendMessageUpwards("Killed", true);
+                }
+            }
+        } else if (shootCooldown > 0)
+        {
+            shootCooldown -= Time.deltaTime;
+        }
     }
 
     /// <summary>
@@ -731,10 +784,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Hit()
     {
-        if (!isDying)
+        if (!isDying && !isBoosting)
         {
             health--;
-            regenCooldown = 5f;
+            regenCooldown = 3f;
             //TODO: play damage sound or make screen turn red briefly
             healthMeter.fillAmount = 0.25f + health * 0.15f;
             if (health < 1)

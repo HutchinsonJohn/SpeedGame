@@ -2810,11 +2810,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 5744880465798714982}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15799f2cd7211f147bfd7b59ce7cad76, type: 3}
+  m_Script: {fileID: 11500000, guid: 8e0ef415e17689e43b1e492735b37482, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   pauseMenuUI: {fileID: 5744880466734986394}
   controlsMenuUI: {fileID: 2961346602670486417}
+  player: {fileID: 0}
   inTutorial: 0
 --- !u!1 &5744880465816923904
 GameObject:

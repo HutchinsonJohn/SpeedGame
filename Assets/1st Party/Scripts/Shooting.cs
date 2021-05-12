@@ -15,6 +15,8 @@ public class Shooting : MonoBehaviour
 
     private FieldOfView fow;
 
+    public AudioSource akShot;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +30,7 @@ public class Shooting : MonoBehaviour
         shootDown = Input.GetButtonDown("Fire1");
         if (shootDown)
         {
+            akShot.Play();
             if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out RaycastHit hit))
             {
                 if(enemy == (enemy | (1 << hit.collider.gameObject.layer)))

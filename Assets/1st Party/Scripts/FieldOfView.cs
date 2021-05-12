@@ -16,21 +16,21 @@ public class FieldOfView : MonoBehaviour
     [HideInInspector]
     public Transform bestTarget;
 
-    public bool FindTarget()
+    public bool FindTarget(Vector3 headPosition)
     {
-        Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, viewRadius, targetMask);
+        Collider[] targetsInViewRadius = Physics.OverlapSphere(headPosition, viewRadius, targetMask);
         bestTarget = null;
         float lowestAngle = viewAngle;
         for (int i = 0; i < targetsInViewRadius.Length; i++)
         {
             Transform target = targetsInViewRadius[i].transform;
-            Vector3 dirToTarget = (target.position - transform.position).normalized;
+            Vector3 dirToTarget = (target.position - headPosition).normalized;
             float angleBetweenTargetAndLook = Vector3.Angle(transform.forward, dirToTarget);
             if (angleBetweenTargetAndLook < viewAngle / 2 && angleBetweenTargetAndLook < lowestAngle)
             {
-                float disToTarget = Vector3.Distance(transform.position, target.position);
+                float disToTarget = Vector3.Distance(headPosition, target.position);
 
-                if (!Physics.Raycast(transform.position, dirToTarget, disToTarget, obstacleMask))
+                if (!Physics.Raycast(headPosition, dirToTarget, disToTarget, obstacleMask))
                 {
                     bestTarget = target;
                     lowestAngle = angleBetweenTargetAndLook;

@@ -11,6 +11,7 @@ public class EnemyScript : MonoBehaviour
     private Transform mainCameraTransform;
     public Rigidbody rbPlayer;
     private FieldOfView fow;
+    private PlayerController playerController;
 
     public bool wasShot;
 
@@ -20,6 +21,12 @@ public class EnemyScript : MonoBehaviour
 
     public AudioSource akShot;
 
+    public float rotationSpeed = 360f * Mathf.Deg2Rad;
+
+    private Vector3 headOffset = new Vector3(0, 1.75f, 0);
+
+    private float upperViewAngle = 0.577350269f; // Tan(30)
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,20 +34,50 @@ public class EnemyScript : MonoBehaviour
         rigidbodies = GetComponentsInChildren<Rigidbody>();
         animator = GetComponent<Animator>();
         fow = GetComponent<FieldOfView>();
+        playerController = GetComponent<PlayerController>();
+        playerController.SetArsenal("AK-74M");
         ToggleRagdoll(true);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (fow.FindTarget())
+        if (!isAlive)
         {
-            transform.LookAt(fow.bestTarget);
+            return;
+        }
+
+        if (PauseMenu.GameIsPaused)
+        {
+            return;
+        }
+
+        if (fow.FindTarget(transform.position + headOffset))
+        {
+            //transform.LookAt(fow.bestTarget.position - Vector3.up);
+            Vector3 rotateTowards = Vector3.Normalize(fow.bestTarget.position - Vector3.up - transform.position);
+            //rotateTowards.y = Mathf.Min(Mathf.Max(-0.5f, rotateTowards.y), 0.5f);
+            float horizontalMagnitude = Mathf.Sqrt(Mathf.Pow(rotateTowards.x, 2) + Mathf.Pow(rotateTowards.z, 2));
+            if (horizontalMagnitude != 0 && rotateTowards.y/ horizontalMagnitude > upperViewAngle)
+            {
+                rotateTowards.y = horizontalMagnitude * upperViewAngle;
+            }
+            Debug.Log(rotateTowards);
+            transform.forward = Vector3.RotateTowards(
+                transform.forward, 
+                rotateTowards,
+                rotationSpeed * Time.deltaTime, 10);
             if (shootingCoroutine == null)
             {
-                StartCoroutine(ShootingCoroutine());
+                shootingCoroutine = StartCoroutine(ShootingCoroutine());
             }
             
+        } else
+        {
+            transform.forward = Vector3.RotateTowards(
+                transform.forward,
+                -Vector3.forward,
+                rotationSpeed * Time.deltaTime, 10);
         }
     }
 
@@ -74,8 +111,8 @@ public class EnemyScript : MonoBehaviour
     }
 
     Vector3 gunHeight = new Vector3(0, 1.4f, 0);
-    private float movementShotSpreadCoefficient = 0.04f;
-    private float stationaryShotSpread = 0.05f;
+    private float movementShotSpreadCoefficient = 0.015f;
+    private float stationaryShotSpread = 0.01f;
     /// <summary>
     /// Handles individual shots and hit registration
     /// </summary>
