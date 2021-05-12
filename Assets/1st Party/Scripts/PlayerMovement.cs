@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -11,8 +12,9 @@ public class PlayerMovement : MonoBehaviour
     public Transform playerCam;
     public Transform orientation;
 
-    public Image Fill;
-    public Text SpeedDebug;
+    public Image boostFill;
+    public Image boostIcon;
+    public Text speedDebug;
 
     public Color boostReady;
     public Color boostNotReady;
@@ -95,6 +97,10 @@ public class PlayerMovement : MonoBehaviour
     // UI
     public GameObject gameOverCanvas;
     public Image healthMeter;
+    public TMP_Text timeDisplay;
+    public GameObject threeText;
+    public GameObject twoText;
+    public GameObject oneText;
 
     // Shooting
     private Transform mainCamera;
@@ -105,6 +111,11 @@ public class PlayerMovement : MonoBehaviour
 
     public Animator swordAnimator;
     public Animator gunAnimator;
+
+    private bool starting = true;
+    public bool tutorial;
+    private float levelTime;
+    private Coroutine readyGoCoroutine;
 
     private void Awake()
     {
@@ -120,7 +131,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (starting)
+        {
+            return;
+        }
+
         if (PauseMenu.GameIsPaused || isDying)
+        {
+            return;
+        }
+
+        if (endReached)
         {
             return;
         }
@@ -142,9 +163,27 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (starting)
+        {
+            if (readyGoCoroutine == null)
+            {
+                readyGoCoroutine = StartCoroutine(ReadyGoCoroutine());
+            }
+            return;
+        }
+
         if (PauseMenu.GameIsPaused || isDying)
         {
             return;
+        }
+
+        if (endReached)
+        {
+            return;
+        } else
+        {
+            levelTime += Time.deltaTime;
+            timeDisplay.text = FormatTime(levelTime);
         }
 
         if (health < 5)
@@ -180,6 +219,25 @@ public class PlayerMovement : MonoBehaviour
         
     }
 
+    IEnumerator ReadyGoCoroutine()
+    {
+        yield return new WaitForSeconds(.5f);
+        threeText.SetActive(true);
+        //Beep
+        yield return new WaitForSeconds(1);
+        threeText.SetActive(false);
+        twoText.SetActive(true);
+        //Beep
+        yield return new WaitForSeconds(1);
+        twoText.SetActive(false);
+        oneText.SetActive(true);
+        //Beep
+        yield return new WaitForSeconds(1);
+        oneText.SetActive(false);
+        //Beep
+        starting = false;
+    }
+
     /// <summary>
     /// Collects user inputs
     /// </summary>
@@ -208,9 +266,58 @@ public class PlayerMovement : MonoBehaviour
         
     }
 
+    private bool endReached;
+    public int currentLevel;
+    private void EndReached()
+    {
+        endReached = true;
+        //display level stat screen
+        switch (currentLevel)
+        {
+            case 0:
+                if (levelTime < PlayerPrefs.GetFloat("Level0BestTime", float.MaxValue))
+                {
+                    //Display new best!
+                    PlayerPrefs.SetFloat("Level0BestTime", levelTime);
+                }
+                //Display new time
+                break;
+            case 1:
+                if (levelTime < PlayerPrefs.GetFloat("Level1BestTime", float.MaxValue))
+                {
+                    //Display new best!
+                    PlayerPrefs.SetFloat("Level1BestTime", levelTime);
+                }
+                //Display new time
+                break;
+            case 2:
+                if (levelTime < PlayerPrefs.GetFloat("Level2BestTime", float.MaxValue))
+                {
+                    //Display new best!
+                    PlayerPrefs.SetFloat("Level2BestTime", levelTime);
+                }
+                //Display new time
+                break;
+            default:
+                break;
+        }
+        //Display best time
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public string FormatTime(float time)
+    {
+        int minutes = (int)time / 60;
+        int seconds = (int)time - 60 * minutes;
+        int milliseconds = (int)(time * 1000) - minutes * 60000 - 1000 * seconds;
+        return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
+
     private void Shoot()
     {
-        if (shootCooldown <= 0 && !swinging)
+        if (shootCooldown <= 0 && (!swinging || timeSwinging > .4f))
         {
             akShot.Play();
             shootCooldown = .1f;
@@ -253,7 +360,7 @@ public class PlayerMovement : MonoBehaviour
                     RefillBoost();
                 }
             }
-            else if (timeSwinging > .4f)
+            else if (timeSwinging > .5f)
             {
                 swinging = false;
             }
@@ -361,15 +468,17 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-        SpeedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
+        speedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
         if (rechargeBoost || isBoosting)
         {
-            Fill.color = boostReady;
+            boostFill.color = boostReady;
+            boostIcon.color = boostReady;
         } else
         {
-            Fill.color = boostNotReady;
+            boostFill.color = boostNotReady;
+            boostIcon.color = boostNotReady;
         }
-        Fill.fillAmount = (float)boostMeterVal / boostMeterLimit;
+        boostFill.fillAmount = Mathf.Lerp(.138f, 1, (float)boostMeterVal / boostMeterLimit);
         //BoostText.text = "Boost " + boostMeterVal.ToString();
 
         //Debug.Log("SpeedState: " + speedState + "\nGrounded: " + grounded + "\nWallrunning: " + isWallRunning + "\nBoosting: " + isBoosting);
