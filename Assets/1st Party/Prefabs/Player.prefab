@@ -323,6 +323,10 @@ MonoBehaviour:
   gunAnimator: {fileID: 7135772988405520935}
   tutorial: 0
   currentLevel: 0
+  winScreen: {fileID: 0}
+  yourTime: {fileID: 0}
+  bestTime: {fileID: 0}
+  nextLevel: {fileID: 0}
 --- !u!1 &1748758070690919053
 GameObject:
   m_ObjectHideFlags: 0
@@ -1005,6 +1009,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0.025
       objectReference: {fileID: 0}
+    - target: {fileID: 23294498579475270, guid: 33f6247810b654041bccca4adbd93f45,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ae73208be2f927c48869e7fa1170f837, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 33f6247810b654041bccca4adbd93f45, type: 3}
 --- !u!1 &2155985984614014366 stripped
