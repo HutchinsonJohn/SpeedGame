@@ -616,7 +616,11 @@ public class PlayerMovement : MonoBehaviour
     public void RefillBoost()
     {
         boostMeterVal = boostMeterLimit;
-        rechargeBoost = true;
+        if (!isBoosting)
+        {
+            rechargeBoost = true;
+        }
+        
     }
 
     private void SideStep()

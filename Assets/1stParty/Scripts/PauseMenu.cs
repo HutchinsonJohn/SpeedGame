@@ -56,6 +56,8 @@ public class PauseMenu : MonoBehaviour
     public void Retry()
     {
         SceneManager.LoadScene(player.currentLevel);
+        Time.timeScale = 1f;
+        GameIsPaused = false;
     }
 
     public void QuitGame()
@@ -66,10 +68,14 @@ public class PauseMenu : MonoBehaviour
     public void NextLevel()
     {
         SceneManager.LoadScene(player.currentLevel+1);
+        Time.timeScale = 1f;
+        GameIsPaused = false;
     }
 
     public void MainMenu()
     {
         SceneManager.LoadScene(0);
+        Time.timeScale = 1f;
+        GameIsPaused = false;
     }
 }
