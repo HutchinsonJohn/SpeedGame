@@ -7,6 +7,9 @@
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # [Aa]ssets/AssetStoreTools*
+[Aa]ssets/1stParty/Scenes/TutorialLevel
+[Aa]ssets/1stParty/Scenes/Level1*
+[Aa]ssets/1stParty/Scenes/Level2*
 
 # Visual Studio cache directory
 .vs/
