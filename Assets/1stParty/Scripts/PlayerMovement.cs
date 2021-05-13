@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     RaycastHit wallHitInfo;
     GameObject hitWallObject;
     GameObject cannotRunOnWallObject;
-    public float sameWallCooldown = 1f;
+    private float sameWallCooldown = 1f;
     public float wallRunStickForce = 100;
     public float wallJumpForce = 1000;
 
@@ -323,7 +323,7 @@ public class PlayerMovement : MonoBehaviour
             default:
                 break;
         }
-        if (currentLevel == 2)
+        if (currentLevel == 3)
         {
             nextLevel.SetActive(false);
         }
@@ -497,7 +497,7 @@ public class PlayerMovement : MonoBehaviour
                 break;
         }
 
-        speedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
+        //speedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
         if (rechargeBoost || isBoosting)
         {
             boostFill.color = boostReady;

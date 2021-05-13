@@ -285,7 +285,6 @@ MonoBehaviour:
     m_Bits: 512
   wallrunForce: 500
   maxWallSpeed: 15
-  sameWallCooldown: 3
   wallRunStickForce: 100
   wallJumpForce: 575
   isBoosting: 0
@@ -665,7 +664,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &3918807709305372386
 RectTransform:
   m_ObjectHideFlags: 0
