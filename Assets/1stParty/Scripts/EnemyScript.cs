@@ -81,6 +81,10 @@ public class EnemyScript : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="wasShot">True if shot, false if killed with sword</param>
     public void Killed(bool wasShot)
     {
         if (isAlive)
@@ -95,12 +99,16 @@ public class EnemyScript : MonoBehaviour
         }
     }
     
-    public void ToggleRagdoll(bool v)
+    /// <summary>
+    /// Toggles rigidbody physics and applies force to rigidbody when turning rigidbody physics off
+    /// </summary>
+    /// <param name="rigidBodyOn">Whether to turn rigidbody physics on or off, true or false</param>
+    public void ToggleRagdoll(bool rigidBodyOn)
     {
         foreach (Rigidbody rigidbody in rigidbodies)
         {
-            rigidbody.isKinematic = v;
-            if (!v)
+            rigidbody.isKinematic = rigidBodyOn;
+            if (!rigidBodyOn)
             {
                 if (wasShot)
                 {
@@ -113,9 +121,10 @@ public class EnemyScript : MonoBehaviour
         }
     }
 
-    Vector3 gunHeight = new Vector3(0, 1.4f, 0);
+    private Vector3 gunHeight = new Vector3(0, 1.4f, 0);
     private float movementShotSpreadCoefficient = 0.005f;
     private float stationaryShotSpread = 0.01f;
+
     /// <summary>
     /// Handles individual shots and hit registration
     /// </summary>
@@ -143,6 +152,9 @@ public class EnemyScript : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Stops ShootingCoroutine and sets aiming to false in the animator
+    /// </summary>
     private void StopShooting()
     {
         if (shootingCoroutine != null)

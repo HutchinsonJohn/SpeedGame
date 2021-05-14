@@ -221,6 +221,10 @@ public class PlayerMovement : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// Displays a 3, 2, 1 countdown to player, then sets starting to false
+    /// </summary>
+    /// <returns></returns>
     IEnumerator ReadyGoCoroutine()
     {
         yield return new WaitForSeconds(.5f);
@@ -276,6 +280,10 @@ public class PlayerMovement : MonoBehaviour
     public GameObject nextLevel;
     public GameObject defeatAllEnemies;
     public int numberOfEnemies;
+
+    /// <summary>
+    /// Handles and displays end of level screen
+    /// </summary>
     private void EndReached()
     {
         if (killedEnemies < numberOfEnemies)
@@ -332,7 +340,12 @@ public class PlayerMovement : MonoBehaviour
         Cursor.visible = true;
     }
 
-    public string FormatTime(float time)
+    /// <summary>
+    /// Formats given float time to string in MM:SS:mmm format
+    /// </summary>
+    /// <param name="time">Time to be converted to a string</param>
+    /// <returns></returns>
+    public static string FormatTime(float time)
     {
         int minutes = (int)time / 60;
         int seconds = (int)time - 60 * minutes;
@@ -340,6 +353,9 @@ public class PlayerMovement : MonoBehaviour
         return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
     }
 
+    /// <summary>
+    /// If the player is able to shoot performs bullet SphereCast and sends message to enemy if hit
+    /// </summary>
     private void Shoot()
     {
         if (shootCooldown <= 0 && (!swinging || timeSwinging > .4f))
@@ -359,6 +375,9 @@ public class PlayerMovement : MonoBehaviour
     private bool swinging;
     private float timeSwinging;
 
+    /// <summary>
+    /// Begins sword swing animation, sets swinging ang timeSwinging
+    /// </summary>
     private void Swing()
     {
         if (!swinging)
@@ -370,6 +389,9 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Performs sword hit detection while swinging
+    /// </summary>
     private void Swinging()
     {
         if (swinging)
@@ -391,11 +413,17 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Increments killedEnemies
+    /// </summary>
     private void IncrementKills()
     {
         killedEnemies++;
     }
 
+    /// <summary>
+    /// DEBUG: Displays sword hitbox
+    /// </summary>
     private void OnDrawGizmos()
     {
         if (timeSwinging > .1f && timeSwinging < .3f)
@@ -984,6 +1012,9 @@ public class PlayerMovement : MonoBehaviour
         cannotRunOnWallObject = null;
     }
 
+    /// <summary>
+    /// Decrements health, sets regenCooldown, sets health bar and handles game over screen when health < 1
+    /// </summary>
     private void Hit()
     {
         if (!isDying && !isBoosting)
