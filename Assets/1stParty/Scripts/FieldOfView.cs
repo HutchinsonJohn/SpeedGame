@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Contains functions for finding targets in objects in field of view
+/// </summary>
 public class FieldOfView : MonoBehaviour
 {
 
@@ -16,6 +19,11 @@ public class FieldOfView : MonoBehaviour
     [HideInInspector]
     public Transform bestTarget;
 
+    /// <summary>
+    /// Find target in fov from headPosition
+    /// </summary>
+    /// <param name="headPosition"></param>
+    /// <returns></returns>
     public bool FindTarget(Vector3 headPosition)
     {
         Collider[] targetsInViewRadius = Physics.OverlapSphere(headPosition, viewRadius, targetMask);
@@ -40,6 +48,12 @@ public class FieldOfView : MonoBehaviour
         return (bestTarget != null);
     }
 
+    // <summary>
+    /// Debug for displaying fov cone
+    /// </summary>
+    /// <param name="angleInDegrees"></param>
+    /// <param name="angleIsGlobal"></param>
+    /// <returns></returns>
     public Vector3 DirFromAngle(float angleInDegrees, bool angleIsGlobal)
     {
         if (!angleIsGlobal)

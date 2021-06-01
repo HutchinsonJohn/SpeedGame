@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Handles enemy shooting, rotation, and death behaviors
+/// </summary>
 public class EnemyScript : MonoBehaviour
 {
-    Rigidbody[] rigidbodies;
-    bool isAlive = true;
+    private Rigidbody[] rigidbodies;
 
     private Animator animator;
     private Transform mainCameraTransform;
@@ -13,7 +15,8 @@ public class EnemyScript : MonoBehaviour
     private FieldOfView fow;
     private PlayerController playerController;
 
-    public bool wasShot;
+    private bool wasShot;
+    private bool isAlive = true;
 
     public LayerMask targetLayersMask;
 
@@ -21,11 +24,15 @@ public class EnemyScript : MonoBehaviour
 
     public AudioSource akShot;
 
-    public float rotationSpeed = 360f * Mathf.Deg2Rad;
+    private float rotationSpeed = 360f * Mathf.Deg2Rad;
 
     private Vector3 headOffset = new Vector3(0, 1.75f, 0);
 
     private float upperViewAngle = 0.577350269f; // Tan(30)
+
+    private Vector3 gunHeight = new Vector3(0, 1.4f, 0);
+    private float movementShotSpreadCoefficient = 0.005f;
+    private float stationaryShotSpread = 0.01f;
 
     // Start is called before the first frame update
     void Start()
@@ -82,19 +89,19 @@ public class EnemyScript : MonoBehaviour
     }
 
     /// <summary>
-    /// 
+    /// Stops the enemy from shooting, toggles ragdoll, and sets wasShot and isAlive
     /// </summary>
     /// <param name="wasShot">True if shot, false if killed with sword</param>
     public void Killed(bool wasShot)
     {
         if (isAlive)
         {
+            StopAllCoroutines();
             this.wasShot = wasShot;
             animator.enabled = false;
             ToggleRagdoll(false);
             isAlive = false;
             tag = "DeadEnemy";
-            StopAllCoroutines();
             rbPlayer.SendMessage("IncrementKills");
         }
     }
@@ -120,10 +127,6 @@ public class EnemyScript : MonoBehaviour
             }
         }
     }
-
-    private Vector3 gunHeight = new Vector3(0, 1.4f, 0);
-    private float movementShotSpreadCoefficient = 0.005f;
-    private float stationaryShotSpread = 0.01f;
 
     /// <summary>
     /// Handles individual shots and hit registration

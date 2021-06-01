@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Handles pausing behaviors
+/// </summary>
 public class PauseMenu : MonoBehaviour
 {
 
@@ -29,11 +32,18 @@ public class PauseMenu : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Sets GameIsPaused to isPaused
+    /// </summary>
+    /// <param name="isPaused">Whether the game is paused</param>
     public void IsPaused(bool isPaused)
     {
         GameIsPaused = isPaused;
     }
 
+    /// <summary>
+    /// Closes pauseMenu, sets timeScale to 1, and locks mouse
+    /// </summary>
     public void Resume()
     {
         pauseMenuUI.SetActive(false);
@@ -44,6 +54,9 @@ public class PauseMenu : MonoBehaviour
         Cursor.visible = false;
     }
 
+    /// <summary>
+    /// Opens pauseMenu, sets timeScale to 0, and unlocks mouse
+    /// </summary>
     public void Pause()
     {
         pauseMenuUI.SetActive(true);
@@ -53,6 +66,9 @@ public class PauseMenu : MonoBehaviour
         Cursor.visible = true;
     }
 
+    /// <summary>
+    /// Reloads current level
+    /// </summary>
     public void Retry()
     {
         SceneManager.LoadScene(player.currentLevel);
@@ -60,11 +76,17 @@ public class PauseMenu : MonoBehaviour
         GameIsPaused = false;
     }
 
+    /// <summary>
+    /// Quits the application
+    /// </summary>
     public void QuitGame()
     {
         Application.Quit();
     }
 
+    /// <summary>
+    /// Loads the next level
+    /// </summary>
     public void NextLevel()
     {
         SceneManager.LoadScene(player.currentLevel+1);
@@ -72,6 +94,9 @@ public class PauseMenu : MonoBehaviour
         GameIsPaused = false;
     }
 
+    /// <summary>
+    /// Returns to the main menu
+    /// </summary>
     public void MainMenu()
     {
         SceneManager.LoadScene(0);

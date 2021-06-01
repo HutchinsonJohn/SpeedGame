@@ -5,6 +5,9 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// Main Menu functions
+/// </summary>
 public class MainMenu : MonoBehaviour
 {
 

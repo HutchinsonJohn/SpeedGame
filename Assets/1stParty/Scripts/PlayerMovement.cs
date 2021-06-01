@@ -22,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
 
     // Keyboard or Controller
-    public bool keyboard = true;
+    public bool keyboard = true; // currently unused
 
     // Rotation and look
     private float xRotation;
@@ -86,7 +86,10 @@ public class PlayerMovement : MonoBehaviour
     private float leftRightInput, forwardBackwardInput;
     public bool jumpHeld, jumpDown, boostHeld, boostDown;
     private Vector3 tiltInput, projForward, movementDirection, horizontal;
-    public int speedState = 0; // 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
+    /// <summary>
+    /// 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
+    /// </summary>
+    public int speedState = 0;
     private int consecutiveIdleFixedUpdates = 0;
 
     // Health
@@ -109,9 +112,14 @@ public class PlayerMovement : MonoBehaviour
     public float bulletSize = 0.1f;
     public LayerMask enemy;
 
+    // Swinging
+    private bool swinging;
+    private float timeSwinging;
+
     public Animator swordAnimator;
     public Animator gunAnimator;
 
+    // Level
     public bool starting = true;
     public bool tutorial;
     private float levelTime;
@@ -371,9 +379,6 @@ public class PlayerMovement : MonoBehaviour
             }
         }
     }
-
-    private bool swinging;
-    private float timeSwinging;
 
     /// <summary>
     /// Begins sword swing animation, sets swinging ang timeSwinging
