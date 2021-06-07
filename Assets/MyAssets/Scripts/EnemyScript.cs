@@ -81,6 +81,7 @@ public class EnemyScript : MonoBehaviour
             
         } else
         {
+            StopShooting();
             transform.forward = Vector3.RotateTowards(
                 transform.forward,
                 -Vector3.forward,

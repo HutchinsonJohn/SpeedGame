@@ -963,7 +963,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1140803431810428679}
-  m_Material: {fileID: 13400000, guid: 531c415a26d34634a9b368fb75d4ff71, type: 2}
+  m_Material: {fileID: 13400000, guid: c2815a7ab32e42c4bb42f59caacb8ec1, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.5
@@ -998,7 +998,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 124839917dd4fc74b9b0fba01598c51b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerCam: {fileID: 3293766123945948437}
   orientation: {fileID: 1140803431737215625}
   boostFill: {fileID: 4236797451877655353}
   boostIcon: {fileID: 3838858211681560665}
@@ -1008,7 +1007,7 @@ MonoBehaviour:
   keyboard: 1
   maxWallRunCameraTilt: 10
   cameraTiltSpeed: 3
-  moveAccel: 50
+  moveAccel: 10000
   maxSpeed: 10
   airborneMovementCoefficent: 0.1
   grounded: 0

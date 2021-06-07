@@ -9,7 +9,6 @@ public class PlayerMovement : MonoBehaviour
 {
 
     // Assingables
-    public Transform playerCam;
     public Transform orientation;
 
     public Image boostFill;
@@ -60,8 +59,8 @@ public class PlayerMovement : MonoBehaviour
     public bool isBoosting;
     private float boostAccel = 1000;
     public bool readyToBoost;
-    private int boostMeterLimit = 100; // 50 pts a second (1/fixedDeltaTime)
-    private int boostMeterVal = 100;  
+    private float boostMeterLimit = 2; // seconds
+    private float boostMeterVal = 2;  
     private bool rechargeBoost = true;
     private float boostCooldown = 1f;
     private int rechargeRate = 2;
@@ -85,7 +84,7 @@ public class PlayerMovement : MonoBehaviour
     // Variables
     private float leftRightInput, forwardBackwardInput;
     public bool jumpHeld, jumpDown, boostHeld, boostDown;
-    private Vector3 tiltInput, projForward, movementDirection, horizontal;
+    private Vector3 tiltInput, projForward, movementDirection, horizontal = Vector3.zero;
     /// <summary>
     /// 0 = grounded run, 1 = wallrun, 2 = boost, 3 = air after ground run, 4 = air after wall run or boost
     /// </summary>
@@ -139,40 +138,9 @@ public class PlayerMovement : MonoBehaviour
         mainCamera = Camera.main.transform;
     }
 
-    private void FixedUpdate()
-    {
-        if (starting)
-        {
-            return;
-        }
-
-        if (PauseMenu.GameIsPaused || isDying)
-        {
-            return;
-        }
-
-        if (endReached)
-        {
-            return;
-        }
-
-        CheckGround();
-        SetMovementDirection();
-        CheckForWall();
-
-        if (grounded) // May be unnecessary
-        {
-            if (speedState != 2)
-            {
-                speedState = 0;
-            }
-        }
-
-        Movement();
-    }
-
     private void Update()
     {
+        // Do nothing if level is starting
         if (starting)
         {
             if (readyGoCoroutine == null)
@@ -182,11 +150,13 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        // Do nothing if game is paused
         if (PauseMenu.GameIsPaused || isDying)
         {
             return;
         }
 
+        // Increment time if end is not reached, otherwise do nothing
         if (endReached)
         {
             return;
@@ -196,6 +166,7 @@ public class PlayerMovement : MonoBehaviour
             timeDisplay.text = FormatTime(levelTime);
         }
 
+        // Health regen
         if (health < 5)
         {
             if (regenCooldown <= 0f)
@@ -212,6 +183,10 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
         Look();
+        CheckGround();
+        SetMovementDirection();
+        CheckForWall();
+        Movement();
 
         if (shootCooldown > 0)
         {
@@ -492,43 +467,33 @@ public class PlayerMovement : MonoBehaviour
 
         if (rechargeBoost && boostMeterVal < boostMeterLimit)
         {
-            boostMeterVal += rechargeRate;
+            boostMeterVal += rechargeRate * Time.deltaTime;
             boostMeterVal = Math.Min(boostMeterVal, boostMeterLimit);
         }
 
         // Limits player influence on movement while not grounded
         movementCoefficent = 1f;
-        if (!grounded)
+        if (!grounded && !isWallRunning && !isBoosting)
         {
             movementCoefficent = airborneMovementCoefficent;
         }
 
-        horizontal = new Vector3(rb.velocity.x, 0, rb.velocity.z); // Should be able to set this even earlier if needed
+        horizontal.x = rb.velocity.x; // This is most efficient way of converting Vector3 to Vector2, need to update other instances of this conversion to match this
+        horizontal.z = rb.velocity.z; // Should be able to set this even earlier if needed
 
-        // Movement force is handled depending on which state the player is currently in (switch to case later)
         switch (speedState)
         {
-            case 0:
-                AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-                break;
             case 1:
                 Wallrun();
                 break;
             case 2:
                 Boost();
                 break;
-            case 3:
-                AccelerateTo(movementDirection * maxSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-                break;
-            case 4:
-                AccelerateTo(movementDirection * maxWallSpeed, moveAccel * movementCoefficent, moveAccel * movementCoefficent);
-                break;
             default:
-                horizontal = horizontal.normalized * 40;
-                rb.velocity = new Vector3(horizontal.x, rb.velocity.y, horizontal.z);
-                Debug.Log("Something went wrong with speedState");
+                rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
                 break;
         }
+        Drag();
 
         //speedDebug.text = string.Format("Velocity: {0:0.0}", horizontal.magnitude);
         if (rechargeBoost || isBoosting)
@@ -540,16 +505,34 @@ public class PlayerMovement : MonoBehaviour
             boostFill.color = boostNotReady;
             boostIcon.color = boostNotReady;
         }
-        boostFill.fillAmount = Mathf.Lerp(.138f, 1, (float)boostMeterVal / boostMeterLimit);
-        //BoostText.text = "Boost " + boostMeterVal.ToString();
+        boostFill.fillAmount = Mathf.Lerp(.138f, 1, boostMeterVal / boostMeterLimit);
 
         //Debug.Log("SpeedState: " + speedState + "\nGrounded: " + grounded + "\nWallrunning: " + isWallRunning + "\nBoosting: " + isBoosting);
 
-        // Handles player slowdown when there is little or no player directional input (no longer necessary)
-        //Vector2 horizontalMagRelative = FindVelRelativeToLook();
-        //CounterMovement(horizontalMagRelative);
-
         //Debug.Log(horizontal.magnitude);
+    }
+
+    private void Drag()
+    {
+        float minDrag;
+        switch (speedState)
+        {
+            case 0:
+                minDrag = 10;
+                break;
+            case 1:
+                minDrag = 15;
+                break;
+            case 2:
+                minDrag = 20;
+                break;
+            default:
+                minDrag = 10;
+                break;
+        }
+        float maxDrag = Mathf.Max(minDrag, horizontal.magnitude);
+        float drag = horizontal.magnitude / maxDrag;
+        rb.AddForce(-horizontal.normalized * moveAccel * drag * movementCoefficent * Time.deltaTime);
     }
 
     /// <summary>
@@ -615,8 +598,8 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void Boost()
     {
-        AccelerateTo(movementDirection * maxBoostSpeed, boostAccel, boostAccel);
-        boostMeterVal--;
+        rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+        boostMeterVal -= Time.deltaTime;
     }
 
     /// <summary>
@@ -796,7 +779,7 @@ public class PlayerMovement : MonoBehaviour
         //}
 
         //Find current look rotation
-        Vector3 rot = playerCam.localRotation.eulerAngles;
+        Vector3 rot = mainCamera.localRotation.eulerAngles;
         desiredX = rot.y + mouseX;
 
         //Rotate, and also make sure we dont over- or under-rotate.
@@ -848,7 +831,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         //Perform the rotations
-        playerCam.localRotation = Quaternion.Euler(xRotation, desiredX, wallRunCameraTilt);
+        mainCamera.localRotation = Quaternion.Euler(xRotation, desiredX, wallRunCameraTilt);
         orientation.localRotation = Quaternion.Euler(0, desiredX, 0);
     }
 
@@ -903,7 +886,7 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void Wallrun()
     {
-        // wallrunForce = 500, wallRunStickForce = 100, moveAccel = 50, maxWallSpeed = 30
+        // wallrunForce = 500, wallRunStickForce = 100, moveAccel = 10000, maxWallSpeed = 15
 
         // Turns gravity off if the player is not ascending
         if (rb.velocity.y > 0.5f)
@@ -915,11 +898,43 @@ public class PlayerMovement : MonoBehaviour
             rb.AddForce(-Vector3.up * 5);
         }
 
-        Vector3 maxDirectionalSpeed = new Vector3(Math.Min(Math.Max(movementDirection.x * 2, -1), 1), 0, Math.Min(Math.Max(movementDirection.z * 2, -1), 1));
-        AccelerateTo(maxDirectionalSpeed * maxWallSpeed, wallrunForce, moveAccel);
-
         // Force to help player stick to wall
         rb.AddForce(-wallHitInfo.normal * wallRunStickForce); //This will not work for walls that are angled (probably just needs y component = 0)
+
+        if (movementDirection.magnitude == 0)
+        {
+            return;
+        }
+
+        float normalAngle = Mathf.Atan2(wallHitInfo.normal.z, wallHitInfo.normal.x);
+        float movementDirectionAngle = Mathf.Atan2(movementDirection.z, movementDirection.x);
+        float angleOverNormal = (normalAngle - movementDirectionAngle);
+        if (angleOverNormal > Mathf.PI)
+        {
+            angleOverNormal -= 2 * Mathf.PI;
+        } else if (angleOverNormal < Mathf.PI)
+        {
+            angleOverNormal += 2 * Mathf.PI;
+        }
+        //Debug.Log(normalAngle + " " + movementDirectionAngle + " " +angleOverNormal);
+        if (Mathf.Abs(angleOverNormal) < Mathf.PI / 6)
+        {
+            rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+        } else if (Mathf.Abs(angleOverNormal) < Mathf.PI * 5 / 6)
+        {
+            if (angleOverNormal > 0)
+            {
+                Vector3 temp = Quaternion.Euler(0, 90, 0) * wallHitInfo.normal;
+                rb.AddForce(temp * moveAccel * movementCoefficent * Time.deltaTime);
+            } else
+            {
+                Vector3 temp = Quaternion.Euler(0, -90, 0) * wallHitInfo.normal;
+                rb.AddForce(temp * moveAccel * movementCoefficent * Time.deltaTime);
+            }
+        } else
+        {
+            rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+        }
     }
 
     /// <summary>
@@ -959,15 +974,15 @@ public class PlayerMovement : MonoBehaviour
             
         } else if (isWallRunning)
         {
-            if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
+            if (grounded)
+            {
+                StopWallRun();
+            } else if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
             {
                 Invoke(nameof(StopWallRun), .2f);
             } else if (Vector3.Angle(movementDirection, -wallHitInfo.normal) > 120f) 
             {
                 Invoke(nameof(StopWallRun), .2f);
-            } else if (grounded)
-            {
-                StopWallRun();
             }
         }
     }
@@ -977,6 +992,7 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void StopWallRun()
     {
+        CancelInvoke(nameof(StopWallRun));
         isWallRunning = false;
         rb.useGravity = true;
 
