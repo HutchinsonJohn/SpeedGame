@@ -123,6 +123,14 @@ public class PlayerMovement : MonoBehaviour
     public bool tutorial;
     private float levelTime;
     private Coroutine readyGoCoroutine;
+    private bool endReached;
+    public int currentLevel;
+    public GameObject winScreen;
+    public TMP_Text yourTime;
+    public TMP_Text bestTime;
+    public GameObject nextLevel;
+    public GameObject defeatAllEnemies;
+    public int numberOfEnemies;
 
     private int killedEnemies;
 
@@ -203,6 +211,19 @@ public class PlayerMovement : MonoBehaviour
         Swinging();
         
     }
+    
+    /// <summary>
+    /// Formats given float time to string in MM:SS:mmm format
+    /// </summary>
+    /// <param name="time">Time to be converted to a string</param>
+    /// <returns></returns>
+    public static string FormatTime(float time)
+    {
+        int minutes = (int)time / 60;
+        int seconds = (int)time - 60 * minutes;
+        int milliseconds = (int)(time * 1000) - minutes * 60000 - 1000 * seconds;
+        return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+    }
 
     /// <summary>
     /// Displays a 3, 2, 1 countdown to player, then sets starting to false
@@ -226,43 +247,6 @@ public class PlayerMovement : MonoBehaviour
         //Beep
         starting = false;
     }
-
-    /// <summary>
-    /// Collects user inputs
-    /// </summary>
-    private void MyInput()
-    {
-        leftRightInput = Input.GetAxisRaw("Horizontal");
-        forwardBackwardInput = Input.GetAxisRaw("Vertical");
-
-        // jumpHeld is true while the button is pressed
-        jumpHeld = Input.GetButton("Jump");
-
-        // jumpDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
-        if (!jumpDown)
-        {
-            jumpDown = Input.GetButtonDown("Jump");
-        }
-
-        // boostHeld is true while the button is pressed
-        boostHeld = Input.GetButton("Fire3");
-
-        // boostDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
-        if (!boostDown)
-        {
-            boostDown = Input.GetButtonDown("Fire3");
-        }
-        
-    }
-
-    private bool endReached;
-    public int currentLevel;
-    public GameObject winScreen;
-    public TMP_Text yourTime;
-    public TMP_Text bestTime;
-    public GameObject nextLevel;
-    public GameObject defeatAllEnemies;
-    public int numberOfEnemies;
 
     /// <summary>
     /// Handles and displays end of level screen
@@ -324,17 +308,34 @@ public class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// Formats given float time to string in MM:SS:mmm format
+    /// Collects user inputs
     /// </summary>
-    /// <param name="time">Time to be converted to a string</param>
-    /// <returns></returns>
-    public static string FormatTime(float time)
+    private void MyInput()
     {
-        int minutes = (int)time / 60;
-        int seconds = (int)time - 60 * minutes;
-        int milliseconds = (int)(time * 1000) - minutes * 60000 - 1000 * seconds;
-        return string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+        leftRightInput = Input.GetAxisRaw("Horizontal");
+        forwardBackwardInput = Input.GetAxisRaw("Vertical");
+
+        // jumpHeld is true while the button is pressed
+        jumpHeld = Input.GetButton("Jump");
+
+        // jumpDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
+        if (!jumpDown)
+        {
+            jumpDown = Input.GetButtonDown("Jump");
+        }
+
+        // boostHeld is true while the button is pressed
+        boostHeld = Input.GetButton("Fire3");
+
+        // boostDown is only true the frame that jump is initially pressed, but this extends it to be true until fixedUpdate() is run once
+        if (!boostDown)
+        {
+            boostDown = Input.GetButtonDown("Fire3");
+        }
+        
     }
+
+    // Combat Methods
 
     /// <summary>
     /// If the player is able to shoot performs bullet SphereCast and sends message to enemy if hit
@@ -402,17 +403,27 @@ public class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// DEBUG: Displays sword hitbox
+    /// Decrements health, sets regenCooldown, sets health bar and handles game over screen when health < 1
     /// </summary>
-    private void OnDrawGizmos()
+    private void Hit()
     {
-        if (timeSwinging > .1f && timeSwinging < .3f)
+        if (!isDying && !isBoosting)
         {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward, 1);
-            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward * 2, 1);
+            health--;
+            regenCooldown = 3f;
+            //TODO: play damage sound or make screen turn red briefly
+            healthMeter.fillAmount = 0.25f + health * 0.15f;
+            if (health < 1)
+            {
+                isDying = true;
+                gameOverCanvas.SetActive(true);
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
         }
     }
+
+    // Movement Methods
 
     /// <summary>
     /// Handles all player movement
@@ -512,6 +523,9 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log(horizontal.magnitude);
     }
 
+    /// <summary>
+    /// Applies drag based on speedState, current horizontal velocity, and whether the player is airborne
+    /// </summary>
     private void Drag()
     {
         float minDrag;
@@ -533,6 +547,28 @@ public class PlayerMovement : MonoBehaviour
         float maxDrag = Mathf.Max(minDrag, horizontal.magnitude);
         float drag = horizontal.magnitude / maxDrag;
         rb.AddForce(-horizontal.normalized * moveAccel * drag * movementCoefficent * Time.deltaTime);
+    }
+
+    /// <summary>
+    /// Sets the direction that the player is attempting to move, adjusted for slopes
+    /// </summary>
+    private void SetMovementDirection()
+    {
+        // Creates a directional player input Vector3 that is normalized if using a keyboard
+        tiltInput = Vector3.ClampMagnitude(new Vector3(leftRightInput, 0, forwardBackwardInput), 1f);
+
+        // The direction the player is facing adjusted for slopes
+        projForward = orientation.forward - (Vector3.Dot(orientation.forward, groundHitInfo.normal) * groundHitInfo.normal);
+
+        // The direction that the player is attempting to move, adjusted for slopes
+        movementDirection = Quaternion.LookRotation(projForward, groundHitInfo.normal) * tiltInput;
+        movementDirection.Normalize();
+
+        // Negates vertical component when positive so that additional force is not applied upwards
+        if (movementDirection.y > 0)
+        {
+            movementDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
+        }
     }
 
     /// <summary>
@@ -561,26 +597,32 @@ public class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the direction that the player is attempting to move, adjusted for slopes
+    /// Handles player slowdown when there is little or no player directional input
     /// </summary>
-    private void SetMovementDirection()
+    /// <param name="mag">Vector2 containing directional movement relative to player look direction</param>
+    private void CounterMovement(Vector2 mag)
     {
-        // Creates a directional player input Vector3 that is normalized if using a keyboard
-        tiltInput = Vector3.ClampMagnitude(new Vector3(leftRightInput, 0, forwardBackwardInput), 1f);
-
-        // The direction the player is facing adjusted for slopes
-        projForward = orientation.forward - (Vector3.Dot(orientation.forward, groundHitInfo.normal) * groundHitInfo.normal);
-
-        // The direction that the player is attempting to move, adjusted for slopes
-        movementDirection = Quaternion.LookRotation(projForward, groundHitInfo.normal) * tiltInput;
-        movementDirection.Normalize();
-
-        // Negates vertical component when positive so that additional force is not applied upwards
-        if (movementDirection.y > 0)
+        // Used to slow the player much less if they are not grounded
+        if (grounded)
         {
-            movementDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
+            counterCoefficent = 1f;
+        }
+        else
+        {
+            counterCoefficent = airborneCounterCoefficent;
+        }
+
+        if (Math.Abs(mag.x) > threshold && Math.Abs(leftRightInput) < 0.05f || (mag.x < -threshold && leftRightInput > 0) || (mag.x > threshold && leftRightInput < 0))
+        {
+            rb.AddForce(moveAccel * orientation.right * Time.fixedDeltaTime * -mag.x * counterMovement * counterCoefficent);
+        }
+        if (Math.Abs(mag.y) > threshold && Math.Abs(forwardBackwardInput) < 0.05f || (mag.y < -threshold && forwardBackwardInput > 0) || (mag.y > threshold && forwardBackwardInput < 0))
+        {
+            rb.AddForce(moveAccel * orientation.forward * Time.fixedDeltaTime * -mag.y * counterMovement * counterCoefficent);
         }
     }
+
+    // Boost Methods
 
     /// <summary>
     /// Sets speedState, isBoosting, and rechargeBoost accordingly
@@ -655,6 +697,8 @@ public class PlayerMovement : MonoBehaviour
         //if lane too close (just to the side of lane plane) check next closest lane (no idea how to do this)
     }
 
+    // Jump Methods
+
     /// <summary>
     /// Handles player grounded jumps
     /// </summary>
@@ -719,6 +763,8 @@ public class PlayerMovement : MonoBehaviour
         readyToDoubleJump = false;
     }
 
+    // Ground Methods
+
     /// <summary>
     /// Checks whether the slope of the param is less than maxSlopeAngle
     /// </summary>
@@ -764,6 +810,8 @@ public class PlayerMovement : MonoBehaviour
             }
         }
     }
+
+    // Look Methods
 
     /// <summary>
     /// Handles player camera rotation
@@ -836,31 +884,6 @@ public class PlayerMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// Handles player slowdown when there is little or no player directional input
-    /// </summary>
-    /// <param name="mag">Vector2 containing directional movement relative to player look direction</param>
-    private void CounterMovement(Vector2 mag)
-    {
-        // Used to slow the player much less if they are not grounded
-        if (grounded) 
-        {
-            counterCoefficent = 1f;
-        } else
-        {
-            counterCoefficent = airborneCounterCoefficent;
-        }
-
-        if (Math.Abs(mag.x) > threshold && Math.Abs(leftRightInput) < 0.05f || (mag.x < -threshold && leftRightInput > 0) || (mag.x > threshold && leftRightInput < 0))
-        {
-            rb.AddForce(moveAccel * orientation.right * Time.fixedDeltaTime * -mag.x * counterMovement * counterCoefficent);
-        }
-        if (Math.Abs(mag.y) > threshold && Math.Abs(forwardBackwardInput) < 0.05f || (mag.y < -threshold && forwardBackwardInput > 0) || (mag.y > threshold && forwardBackwardInput < 0))
-        {
-            rb.AddForce(moveAccel * orientation.forward * Time.fixedDeltaTime * -mag.y * counterMovement * counterCoefficent);
-        }
-    }
-
-    /// <summary>
     /// Find the velocity relative to where the player is looking
     /// Useful for vectors calculations regarding movement and limiting movement
     /// </summary>
@@ -880,6 +903,8 @@ public class PlayerMovement : MonoBehaviour
 
         return new Vector2(xMag, yMag);
     }
+
+    // Wallrun Methods
 
     /// <summary>
     /// Handles movement force if player is wallrunning
@@ -1033,24 +1058,18 @@ public class PlayerMovement : MonoBehaviour
         cannotRunOnWallObject = null;
     }
 
+    // Debug Methods
+
     /// <summary>
-    /// Decrements health, sets regenCooldown, sets health bar and handles game over screen when health < 1
+    /// DEBUG: Displays sword hitbox
     /// </summary>
-    private void Hit()
+    private void OnDrawGizmos()
     {
-        if (!isDying && !isBoosting)
+        if (timeSwinging > .1f && timeSwinging < .3f)
         {
-            health--;
-            regenCooldown = 3f;
-            //TODO: play damage sound or make screen turn red briefly
-            healthMeter.fillAmount = 0.25f + health * 0.15f;
-            if (health < 1)
-            {
-                isDying = true;
-                gameOverCanvas.SetActive(true);
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward, 1);
+            Gizmos.DrawSphere(mainCamera.position + mainCamera.forward * 2, 1);
         }
     }
 
