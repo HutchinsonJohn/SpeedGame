@@ -16719,88 +16719,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
         type: 3}
-      propertyPath: oneText
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: twoText
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: bestTime
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: yourTime
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: boostFill
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: boostIcon
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: nextLevel
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: threeText
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: winScreen
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: speedDebug
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: healthMeter
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: timeDisplay
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
       propertyPath: currentLevel
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
         type: 3}
-      propertyPath: enemy.m_Bits
-      value: 1024
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: gameOverCanvas
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
       propertyPath: numberOfEnemies
       value: 27
-      objectReference: {fileID: 0}
-    - target: {fileID: 1140803431810428672, guid: 3a8aa431adf958d4fabebf62379de0c0,
-        type: 3}
-      propertyPath: defeatAllEnemies
-      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 1140803431810428678, guid: 3a8aa431adf958d4fabebf62379de0c0,
         type: 3}
