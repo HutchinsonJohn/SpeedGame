@@ -116,16 +116,6 @@ public class EnemyScript : MonoBehaviour
         foreach (Rigidbody rigidbody in rigidbodies)
         {
             rigidbody.isKinematic = rigidBodyOn;
-            if (!rigidBodyOn)
-            {
-                if (wasShot)
-                {
-                    rigidbody.AddForce(mainCameraTransform.forward * 500);
-                } else
-                {
-                    rigidbody.AddForce(mainCameraTransform.forward * 500 + rbPlayer.velocity * 100);
-                }
-            }
         }
     }
 

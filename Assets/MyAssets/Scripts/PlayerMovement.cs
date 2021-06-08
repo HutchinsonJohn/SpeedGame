@@ -351,6 +351,7 @@ public class PlayerMovement : MonoBehaviour
                 if (hit.transform.tag == "Enemy")
                 {
                     hit.transform.SendMessageUpwards("Killed", true);
+                    hit.rigidbody.AddForce(mainCamera.transform.forward * 3000);
                 }
             }
         }
@@ -384,6 +385,7 @@ public class PlayerMovement : MonoBehaviour
                 foreach (Collider hit in hits)
                 {
                     hit.transform.SendMessageUpwards("Killed", false);
+                    hit.attachedRigidbody.AddForce(mainCamera.transform.forward * 500 + rb.velocity * 100);
                     RefillBoost();
                 }
             }
