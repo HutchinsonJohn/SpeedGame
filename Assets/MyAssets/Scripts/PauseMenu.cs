@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -25,7 +23,8 @@ public class PauseMenu : MonoBehaviour
             if (GameIsPaused)
             {
                 Resume();
-            } else
+            }
+            else
             {
                 Pause();
             }
@@ -89,7 +88,7 @@ public class PauseMenu : MonoBehaviour
     /// </summary>
     public void NextLevel()
     {
-        SceneManager.LoadScene(player.currentLevel+1);
+        SceneManager.LoadScene(player.currentLevel + 1);
         Time.timeScale = 1f;
         GameIsPaused = false;
     }

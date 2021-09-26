@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -66,7 +65,7 @@ public class EnemyScript : MonoBehaviour
             Vector3 rotateTowards = Vector3.Normalize(fow.bestTarget.position - Vector3.up - transform.position);
             //rotateTowards.y = Mathf.Min(Mathf.Max(-0.5f, rotateTowards.y), 0.5f);
             float horizontalMagnitude = Mathf.Sqrt(Mathf.Pow(rotateTowards.x, 2) + Mathf.Pow(rotateTowards.z, 2));
-            if (horizontalMagnitude != 0 && rotateTowards.y/ horizontalMagnitude > upperViewAngle)
+            if (horizontalMagnitude != 0 && rotateTowards.y / horizontalMagnitude > upperViewAngle)
             {
                 rotateTowards.y = horizontalMagnitude * upperViewAngle;
             }
@@ -78,7 +77,8 @@ public class EnemyScript : MonoBehaviour
             {
                 shootingCoroutine = StartCoroutine(ShootingCoroutine());
             }
-        } else
+        }
+        else
         {
             StopShooting();
             transform.forward = Vector3.RotateTowards(

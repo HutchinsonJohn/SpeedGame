@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -60,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
     private float boostAccel = 1000;
     public bool readyToBoost;
     private float boostMeterLimit = 2; // seconds
-    private float boostMeterVal = 2;  
+    private float boostMeterVal = 2;
     private bool rechargeBoost = true;
     private float boostCooldown = 1f;
     private int rechargeRate = 2;
@@ -168,7 +167,8 @@ public class PlayerMovement : MonoBehaviour
         if (endReached)
         {
             return;
-        } else
+        }
+        else
         {
             levelTime += Time.deltaTime;
             timeDisplay.text = FormatTime(levelTime);
@@ -204,14 +204,15 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             Shoot();
-        } else if (Input.GetButtonDown("Fire2"))
+        }
+        else if (Input.GetButtonDown("Fire2"))
         {
             Swing();
         }
         Swinging();
-        
+
     }
-    
+
     /// <summary>
     /// Formats given float time to string in MM:SS:mmm format
     /// </summary>
@@ -332,7 +333,7 @@ public class PlayerMovement : MonoBehaviour
         {
             boostDown = Input.GetButtonDown("Fire3");
         }
-        
+
     }
 
     // Combat Methods
@@ -440,7 +441,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 rb.velocity = Vector3.zero;
             }
-        } else
+        }
+        else
         {
             consecutiveIdleFixedUpdates = 0;
         }
@@ -453,10 +455,12 @@ public class PlayerMovement : MonoBehaviour
         if (grounded && !isWallRunning && jumpHeld && readyToJump)
         {
             Jump();
-        } else if (!grounded && !isWallRunning && jumpDown && readyToDoubleJump)
+        }
+        else if (!grounded && !isWallRunning && jumpDown && readyToDoubleJump)
         {
             DoubleJump();
-        } else if (!grounded && isWallRunning && jumpDown)
+        }
+        else if (!grounded && isWallRunning && jumpDown)
         {
             WallJump();
         }
@@ -472,7 +476,8 @@ public class PlayerMovement : MonoBehaviour
                 StartBoost();
             }
             // Else play boost fail noise
-        } else if (isBoosting && (!boostHeld || boostMeterVal <= 0))
+        }
+        else if (isBoosting && (!boostHeld || boostMeterVal <= 0))
         {
             StopBoost();
         }
@@ -513,7 +518,8 @@ public class PlayerMovement : MonoBehaviour
         {
             boostFill.color = boostReady;
             boostIcon.color = boostReady;
-        } else
+        }
+        else
         {
             boostFill.color = boostNotReady;
             boostIcon.color = boostNotReady;
@@ -583,7 +589,7 @@ public class PlayerMovement : MonoBehaviour
         {
             limit = decelerationLimit;
         }
-            
+
         acceleration = Vector3.ClampMagnitude(acceleration, limit);
 
         rb.AddForce(acceleration);
@@ -646,7 +652,8 @@ public class PlayerMovement : MonoBehaviour
         if (grounded)
         {
             speedState = 0;
-        } else
+        }
+        else
         {
             speedState = 4;
         }
@@ -671,7 +678,7 @@ public class PlayerMovement : MonoBehaviour
         {
             rechargeBoost = true;
         }
-        
+
     }
 
     private void SideStep()
@@ -725,7 +732,7 @@ public class PlayerMovement : MonoBehaviour
         // Resets vertical velocity to 0 if descending
         //if (rb.velocity.y < 0)
         //{
-            rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+        rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         //}
 
         // Adds force in direction of player movement and upwards
@@ -786,7 +793,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 speedState = 0;
             }
-            
+
         }
         else
         {
@@ -813,7 +820,7 @@ public class PlayerMovement : MonoBehaviour
     {
         float mouseX = Input.GetAxis("Mouse X") * sensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * sensitivity;
-        
+
         //if (isBoosting)
         //{
         //    mouseX = Mathf.Clamp(mouseX, -100 * Time.deltaTime, 100 * Time.deltaTime);
@@ -828,10 +835,11 @@ public class PlayerMovement : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
         // Tilts camera while wallrunning
-        if (isWallRunning) {
+        if (isWallRunning)
+        {
 
             float dot = Vector3.Dot(Vector3.Cross(orientation.forward, wallHitInfo.normal), new Vector3(1, 1, 1));
-            
+
             if (wallRunCameraTilt < maxWallRunCameraTilt && dot < 0)
             {
                 wallRunCameraTilt += Time.deltaTime * maxWallRunCameraTilt * cameraTiltSpeed;
@@ -840,7 +848,8 @@ public class PlayerMovement : MonoBehaviour
                 if (wallRunCameraTilt > maxWallRunCameraTilt)
                     wallRunCameraTilt = maxWallRunCameraTilt;
 
-            } else if (wallRunCameraTilt > -maxWallRunCameraTilt && dot > 0)
+            }
+            else if (wallRunCameraTilt > -maxWallRunCameraTilt && dot > 0)
             {
                 wallRunCameraTilt -= Time.deltaTime * maxWallRunCameraTilt * cameraTiltSpeed;
 
@@ -856,16 +865,19 @@ public class PlayerMovement : MonoBehaviour
             if (wallRunCameraTilt <= .5) // At 60fps, max camera tilt error is .5, at 30fps its 1.0 with maxtilt 10 and tiltspeed 3
             {
                 wallRunCameraTilt = 0;
-            } else
+            }
+            else
             {
                 wallRunCameraTilt -= Time.deltaTime * maxWallRunCameraTilt * cameraTiltSpeed;
             }
-        } else if (wallRunCameraTilt < 0 && !isWallRunning)
+        }
+        else if (wallRunCameraTilt < 0 && !isWallRunning)
         {
             if (wallRunCameraTilt >= -.5) // At 60fps, max camera tilt error is .5, at 30fps its 1.0 with maxtilt 10 and tiltspeed 3
             {
                 wallRunCameraTilt = 0;
-            } else
+            }
+            else
             {
                 wallRunCameraTilt += Time.deltaTime * maxWallRunCameraTilt * cameraTiltSpeed;
             }
@@ -910,7 +922,8 @@ public class PlayerMovement : MonoBehaviour
         if (rb.velocity.y > 0.5f)
         {
             rb.useGravity = true;
-        } else
+        }
+        else
         {
             rb.useGravity = false;
             rb.AddForce(-Vector3.up * 5);
@@ -930,7 +943,8 @@ public class PlayerMovement : MonoBehaviour
         if (angleOverNormal > Mathf.PI)
         {
             angleOverNormal -= 2 * Mathf.PI;
-        } else if (angleOverNormal < Mathf.PI)
+        }
+        else if (angleOverNormal < Mathf.PI)
         {
             angleOverNormal += 2 * Mathf.PI;
         }
@@ -938,18 +952,21 @@ public class PlayerMovement : MonoBehaviour
         if (Mathf.Abs(angleOverNormal) < Mathf.PI / 6)
         {
             rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
-        } else if (Mathf.Abs(angleOverNormal) < Mathf.PI * 5 / 6)
+        }
+        else if (Mathf.Abs(angleOverNormal) < Mathf.PI * 5 / 6)
         {
             if (angleOverNormal > 0)
             {
                 Vector3 temp = Quaternion.Euler(0, 90, 0) * wallHitInfo.normal;
                 rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * temp);
-            } else
+            }
+            else
             {
                 Vector3 temp = Quaternion.Euler(0, -90, 0) * wallHitInfo.normal;
                 rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * temp);
             }
-        } else
+        }
+        else
         {
             rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
         }
@@ -989,16 +1006,18 @@ public class PlayerMovement : MonoBehaviour
                     speedState = 1;
                 }
             }
-            
-        } else if (isWallRunning)
+        }
+        else if (isWallRunning)
         {
             if (grounded)
             {
                 StopWallRun();
-            } else if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
+            }
+            else if (!Physics.Raycast(rb.position, -wallHitInfo.normal, out wallHitInfo, 1f, whatIsWall))
             {
                 Invoke(nameof(StopWallRun), .2f);
-            } else if (Vector3.Angle(movementDirection, -wallHitInfo.normal) > 120f) 
+            }
+            else if (Vector3.Angle(movementDirection, -wallHitInfo.normal) > 120f)
             {
                 Invoke(nameof(StopWallRun), .2f);
             }
@@ -1037,7 +1056,7 @@ public class PlayerMovement : MonoBehaviour
 
         // TODO: Redo force to use accelerateTo
 
-        Vector3 jumpDirection = new(movementDirection.x/2 + wallHitInfo.normal.x, 0, movementDirection.z/2 + wallHitInfo.normal.z); // Can be seperated from vertical component to better control horizontal push off wall
+        Vector3 jumpDirection = new(movementDirection.x / 2 + wallHitInfo.normal.x, 0, movementDirection.z / 2 + wallHitInfo.normal.z); // Can be seperated from vertical component to better control horizontal push off wall
         AccelerateTo(jumpDirection.normalized * maxWallSpeed, wallJumpForce, wallJumpForce);
         rb.AddForce(Vector3.up * jumpForce);
         StopWallRun();
