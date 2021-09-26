@@ -26,11 +26,11 @@ public class EnemyScript : MonoBehaviour
 
     private float rotationSpeed = 360f * Mathf.Deg2Rad;
 
-    private Vector3 headOffset = new Vector3(0, 1.75f, 0);
+    private Vector3 headOffset = new(0, 1.75f, 0);
 
     private float upperViewAngle = 0.577350269f; // Tan(30)
 
-    private Vector3 gunHeight = new Vector3(0, 1.4f, 0);
+    private Vector3 gunHeight = new(0, 1.4f, 0);
     private float movementShotSpreadCoefficient = 0.005f;
     private float stationaryShotSpread = 0.01f;
 
@@ -71,14 +71,13 @@ public class EnemyScript : MonoBehaviour
                 rotateTowards.y = horizontalMagnitude * upperViewAngle;
             }
             transform.forward = Vector3.RotateTowards(
-                transform.forward, 
+                transform.forward,
                 rotateTowards,
                 rotationSpeed * Time.deltaTime, 10);
             if (shootingCoroutine == null)
             {
                 shootingCoroutine = StartCoroutine(ShootingCoroutine());
             }
-            
         } else
         {
             StopShooting();
@@ -106,7 +105,7 @@ public class EnemyScript : MonoBehaviour
             rbPlayer.SendMessage("IncrementKills");
         }
     }
-    
+
     /// <summary>
     /// Toggles rigidbody physics and applies force to rigidbody when turning rigidbody physics off
     /// </summary>
@@ -126,18 +125,18 @@ public class EnemyScript : MonoBehaviour
     {
         if (Physics.Raycast(transform.position + gunHeight, transform.forward, out RaycastHit hit, 100, targetLayersMask))
         {
-            if (hit.transform.tag != "Enemy") //Won't shoot if another enemy is directly in front of them
+            if (!hit.transform.CompareTag("Enemy")) //Won't shoot if another enemy is directly in front of them
             {
                 animator.SetTrigger("Attack");
                 akShot.Play();
                 float shotSpread = rbPlayer.velocity.magnitude * movementShotSpreadCoefficient + stationaryShotSpread;
                 if (Physics.Raycast(transform.position + gunHeight, transform.TransformDirection(new Vector3((1 - 2 * Random.value) * shotSpread, (1 - 2 * Random.value) * shotSpread, 1)), out hit, 100, targetLayersMask))
                 {
-                    if (hit.transform.tag == "Player")
+                    if (hit.transform.CompareTag("Player"))
                     {
                         hit.transform.SendMessage("Hit");
                     }
-                    else if (hit.transform.tag == "Enemy") //Can still miss and kill other enemies
+                    else if (hit.transform.CompareTag("Enemy")) //Can still miss and kill other enemies
                     {
                         hit.transform.SendMessage("Killed");
                     }
@@ -183,5 +182,4 @@ public class EnemyScript : MonoBehaviour
 
         shootingCoroutine = null;
     }
-
 }

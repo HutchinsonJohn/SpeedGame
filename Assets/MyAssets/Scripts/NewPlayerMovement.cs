@@ -55,11 +55,11 @@ public class NewPlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         Debug.Log(rb.velocity.magnitude);
-        rb.AddForce(movementDirection * 10000 * Time.deltaTime);
+        rb.AddForce(10000 * Time.deltaTime * movementDirection);
 
         float maxDrag = Mathf.Max(10, horizontal.magnitude);
         float drag = horizontal.magnitude / maxDrag;
-        rb.AddForce(-horizontal.normalized * 10000 * drag * Time.deltaTime);
+        rb.AddForce(10000 * drag * Time.deltaTime * -horizontal.normalized);
     }
 
     //private void Drag()

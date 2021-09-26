@@ -348,7 +348,7 @@ public class PlayerMovement : MonoBehaviour
             shootCooldown = .1f;
             if (Physics.SphereCast(mainCamera.position, bulletSize, mainCamera.forward, out RaycastHit hit))
             {
-                if (hit.transform.tag == "Enemy")
+                if (hit.transform.CompareTag("Enemy"))
                 {
                     hit.transform.SendMessageUpwards("Killed", true);
                     hit.rigidbody.AddForce(mainCamera.transform.forward * 3000);
@@ -447,7 +447,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Adds aditional gravity (makes physics work better idk)
         float gravityMultiplier = 10f;
-        rb.AddForce(Vector3.down * Time.fixedDeltaTime * gravityMultiplier);
+        rb.AddForce(Time.fixedDeltaTime * gravityMultiplier * Vector3.down);
 
         // Player jumps or double jumps if conditions are met
         if (grounded && !isWallRunning && jumpHeld && readyToJump)
@@ -503,7 +503,7 @@ public class PlayerMovement : MonoBehaviour
                 Boost();
                 break;
             default:
-                rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+                rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
                 break;
         }
         Drag();
@@ -530,25 +530,16 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void Drag()
     {
-        float minDrag;
-        switch (speedState)
+        var minDrag = speedState switch
         {
-            case 0:
-                minDrag = 10;
-                break;
-            case 1:
-                minDrag = 15;
-                break;
-            case 2:
-                minDrag = 20;
-                break;
-            default:
-                minDrag = 10;
-                break;
-        }
+            0 => 10,
+            1 => 15,
+            2 => 20,
+            _ => 10,
+        };
         float maxDrag = Mathf.Max(minDrag, horizontal.magnitude);
         float drag = horizontal.magnitude / maxDrag;
-        rb.AddForce(-horizontal.normalized * moveAccel * drag * movementCoefficent * Time.deltaTime);
+        rb.AddForce(moveAccel * drag * movementCoefficent * Time.deltaTime * -horizontal.normalized);
     }
 
     /// <summary>
@@ -616,11 +607,11 @@ public class PlayerMovement : MonoBehaviour
 
         if (Math.Abs(mag.x) > threshold && Math.Abs(leftRightInput) < 0.05f || (mag.x < -threshold && leftRightInput > 0) || (mag.x > threshold && leftRightInput < 0))
         {
-            rb.AddForce(moveAccel * orientation.right * Time.fixedDeltaTime * -mag.x * counterMovement * counterCoefficent);
+            rb.AddForce(Time.fixedDeltaTime * -mag.x * counterMovement * counterCoefficent * moveAccel * orientation.right);
         }
         if (Math.Abs(mag.y) > threshold && Math.Abs(forwardBackwardInput) < 0.05f || (mag.y < -threshold && forwardBackwardInput > 0) || (mag.y > threshold && forwardBackwardInput < 0))
         {
-            rb.AddForce(moveAccel * orientation.forward * Time.fixedDeltaTime * -mag.y * counterMovement * counterCoefficent);
+            rb.AddForce(Time.fixedDeltaTime * -mag.y * counterMovement * counterCoefficent * moveAccel * orientation.forward);
         }
     }
 
@@ -642,7 +633,7 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     private void Boost()
     {
-        rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+        rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
         boostMeterVal -= Time.deltaTime;
     }
 
@@ -739,7 +730,7 @@ public class PlayerMovement : MonoBehaviour
 
         // Adds force in direction of player movement and upwards
         // (serves to allow player to use double jump to significantly alter horizontal direction midair)
-        Vector3 jumpDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
+        Vector3 jumpDirection = new(movementDirection.x, 0, movementDirection.z);
 
         // Probably a better way to do this
         switch (speedState)
@@ -946,21 +937,21 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log(normalAngle + " " + movementDirectionAngle + " " +angleOverNormal);
         if (Mathf.Abs(angleOverNormal) < Mathf.PI / 6)
         {
-            rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+            rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
         } else if (Mathf.Abs(angleOverNormal) < Mathf.PI * 5 / 6)
         {
             if (angleOverNormal > 0)
             {
                 Vector3 temp = Quaternion.Euler(0, 90, 0) * wallHitInfo.normal;
-                rb.AddForce(temp * moveAccel * movementCoefficent * Time.deltaTime);
+                rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * temp);
             } else
             {
                 Vector3 temp = Quaternion.Euler(0, -90, 0) * wallHitInfo.normal;
-                rb.AddForce(temp * moveAccel * movementCoefficent * Time.deltaTime);
+                rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * temp);
             }
         } else
         {
-            rb.AddForce(movementDirection * moveAccel * movementCoefficent * Time.deltaTime);
+            rb.AddForce(moveAccel * movementCoefficent * Time.deltaTime * movementDirection);
         }
     }
 
@@ -1027,7 +1018,7 @@ public class PlayerMovement : MonoBehaviour
         cannotRunOnWallObject = hitWallObject;
 
         // Resets the wall to be wallrunnable again after sameWallCooldown
-        Invoke(nameof(resetCannotRunOnWallObject), sameWallCooldown);
+        Invoke(nameof(ResetCannotRunOnWallObject), sameWallCooldown);
 
         // state management
         speedState = 4;
@@ -1046,7 +1037,7 @@ public class PlayerMovement : MonoBehaviour
 
         // TODO: Redo force to use accelerateTo
 
-        Vector3 jumpDirection = new Vector3((movementDirection.x/2 + wallHitInfo.normal.x), 0, (movementDirection.z/2 + wallHitInfo.normal.z)); // Can be seperated from vertical component to better control horizontal push off wall
+        Vector3 jumpDirection = new(movementDirection.x/2 + wallHitInfo.normal.x, 0, movementDirection.z/2 + wallHitInfo.normal.z); // Can be seperated from vertical component to better control horizontal push off wall
         AccelerateTo(jumpDirection.normalized * maxWallSpeed, wallJumpForce, wallJumpForce);
         rb.AddForce(Vector3.up * jumpForce);
         StopWallRun();
@@ -1055,7 +1046,7 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>
     /// Sets cannotRunWallObject to null
     /// </summary>
-    private void resetCannotRunOnWallObject()
+    private void ResetCannotRunOnWallObject()
     {
         cannotRunOnWallObject = null;
     }
